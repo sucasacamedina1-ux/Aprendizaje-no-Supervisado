@@ -51,8 +51,27 @@ function crearSVG(ancho, alto) {
   });
 }
 
-// Envuelve el SVG en la tarjeta que se muestra en el panel de resultados
-function crearTarjetaGrafico(svg, tipo, titulo) {
+// Envuelve el SVG en la tarjeta que se muestra en el panel de resultados.
+// opciones: resumen (texto para lectores de pantalla) y series [{nombre, color}]
+// para la leyenda (solo se muestra si hay más de una serie).
+function crearTarjetaGrafico(svg, tipo, titulo, opciones) {
+  opciones = opciones || {};
+  var resumen = opciones.resumen || "";
+  var series = opciones.series || [];
+
+  // Accesibilidad: el SVG es una imagen con título, descripción y resumen
+  var idBase = "graf-" + tipo + "-" + (++grafContadorIds);
+  var tituloSvg = svgElemento("title", { id: idBase + "-titulo" });
+  tituloSvg.textContent = titulo;
+  var descSvg = svgElemento("desc", { id: idBase + "-desc" });
+  descSvg.textContent = resumen + " Con el teclado: enfoca el gráfico y usa las flechas para recorrer los datos.";
+  svg.insertBefore(descSvg, svg.firstChild);
+  svg.insertBefore(tituloSvg, svg.firstChild);
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", titulo + ". " + resumen);
+  svg.setAttribute("aria-describedby", idBase + "-desc");
+  svg.setAttribute("tabindex", "0");
+
   var tarjeta = document.createElement("div");
   tarjeta.className = "graf-tarjeta";
   tarjeta.setAttribute("data-tipo", tipo);
@@ -60,8 +79,29 @@ function crearTarjetaGrafico(svg, tipo, titulo) {
 
   var cuerpo = document.createElement("div");
   cuerpo.className = "graf-cuerpo";
-  cuerpo.appendChild(svg);
+
+  var lienzo = document.createElement("div");
+  lienzo.className = "graf-lienzo";
+  lienzo.appendChild(svg);
+  var tooltip = document.createElement("div");
+  tooltip.className = "graf-tooltip";
+  tooltip.setAttribute("aria-hidden", "true");
+  lienzo.appendChild(tooltip);
+  cuerpo.appendChild(lienzo);
+
+  if (series.length > 1) {
+    cuerpo.classList.add("graf-cuerpo--con-leyenda");
+    cuerpo.appendChild(crearLeyenda(svg, series));
+  }
   tarjeta.appendChild(cuerpo);
+
+  // Región que anuncia el dato activo al recorrer con el teclado
+  var anuncio = document.createElement("div");
+  anuncio.className = "graf-anuncio";
+  anuncio.setAttribute("aria-live", "polite");
+  tarjeta.appendChild(anuncio);
+
+  activarInteraccion(svg, tooltip, anuncio);
   return tarjeta;
 }
 
@@ -104,6 +144,48 @@ function redondear2(v) {
 // Retraso escalonado de la animación de entrada (con tope para datos grandes)
 function retrasoAnimacion(el, indice, pasoMs, topeMs) {
   el.style.setProperty("--graf-retraso", Math.min(indice * pasoMs, topeMs) + "ms");
+}
+
+// Valor numérico legible para tooltips (sin decimales sobrantes)
+function formatearDato(v) {
+  if (v === null || v === undefined || isNaN(v)) return "—";
+  if (Number.isInteger(v)) return String(v);
+  return String(Number(Number(v).toFixed(Math.abs(v) >= 100 ? 2 : 3)));
+}
+
+// ¿La columna de la tabla tiene exactamente estos valores numéricos, fila a fila?
+function columnaCoincide(columna, valores) {
+  for (var i = 0; i < valores.length; i++) {
+    if (Number(columna.valores[i]) !== valores[i]) return false;
+  }
+  return true;
+}
+
+// Nombres de las observaciones (primera columna de texto de la tabla), solo si los
+// datos graficados coinciden fila a fila con la tabla; si no, null
+function nombresObservaciones(x, y) {
+  if (typeof datos === "undefined" || !datos || !datos.columnas || datos.filas !== x.length) return null;
+  var hayX = false;
+  var hayY = false;
+  var columnaNombres = null;
+  for (var c = 0; c < datos.columnas.length; c++) {
+    var col = datos.columnas[c];
+    if (!hayX && columnaCoincide(col, x)) hayX = true;
+    if (!hayY && columnaCoincide(col, y)) hayY = true;
+    if (!columnaNombres) {
+      for (var f = 0; f < col.valores.length; f++) {
+        var v = col.valores[f];
+        if (v !== null && v !== undefined && v !== "" && isNaN(Number(v))) { columnaNombres = col; break; }
+      }
+    }
+  }
+  if (!hayX || !hayY || !columnaNombres) return null;
+  return columnaNombres.valores.map(function (v) { return v === null || v === undefined ? "" : String(v); });
+}
+
+// Nombre a mostrar de la observación i
+function nombreObservacion(nombres, i) {
+  return nombres && nombres[i] ? nombres[i] : "Obs. " + (i + 1);
 }
 
 // =============================================================================
@@ -492,6 +574,154 @@ function dibujarCruz(padre, cx, cy, color) {
 }
 
 // =============================================================================
+// INTERACCIÓN: tooltip, resaltado, teclado y leyenda
+// =============================================================================
+
+// Marca un elemento para tooltip/resaltado; "serie" lo asocia a la leyenda
+function marcarInteractivo(el, texto, serie) {
+  el.classList.add("graf-interactivo");
+  el.setAttribute("data-tooltip", texto);
+  if (serie !== undefined) el.setAttribute("data-serie", serie);
+  return el;
+}
+
+// Muestra el tooltip encima del elemento (o debajo si no cabe arriba)
+function mostrarTooltip(tooltip, el) {
+  var partes = el.getAttribute("data-tooltip").split(" · ");
+  tooltip.innerHTML = "";
+  var cabecera = document.createElement("strong");
+  cabecera.textContent = partes[0];
+  tooltip.appendChild(cabecera);
+  for (var i = 1; i < partes.length; i++) {
+    var linea = document.createElement("span");
+    linea.textContent = partes[i];
+    tooltip.appendChild(linea);
+  }
+  tooltip.classList.add("graf-tooltip--visible");
+
+  var lienzo = tooltip.parentNode.getBoundingClientRect();
+  var caja = el.getBoundingClientRect();
+  var ancho = tooltip.offsetWidth;
+  var alto = tooltip.offsetHeight;
+  var x = caja.left + caja.width / 2 - lienzo.left - ancho / 2;
+  var y = caja.top - lienzo.top - alto - 10;
+  if (y < 0) y = caja.bottom - lienzo.top + 10;
+  x = Math.max(4, Math.min(x, lienzo.width - ancho - 4));
+  tooltip.style.left = x + "px";
+  tooltip.style.top = y + "px";
+}
+
+// Resalta un elemento, atenúa los demás y muestra su tooltip (null = limpiar)
+function activarElemento(svg, tooltip, el) {
+  var previo = svg.querySelector(".graf-activo");
+  if (previo) previo.classList.remove("graf-activo");
+  if (!el) {
+    svg.classList.remove("graf-resaltando");
+    tooltip.classList.remove("graf-tooltip--visible");
+    return;
+  }
+  el.classList.add("graf-activo");
+  svg.classList.add("graf-resaltando");
+  mostrarTooltip(tooltip, el);
+}
+
+// Elementos que se pueden recorrer (los de series ocultas no cuentan)
+function elementosVisibles(svg) {
+  return Array.prototype.slice.call(svg.querySelectorAll(".graf-interactivo")).filter(function (el) {
+    return !el.closest(".graf-oculto");
+  });
+}
+
+// Mouse, toque y teclado (flechas, Inicio, Fin, Escape) sobre el SVG
+function activarInteraccion(svg, tooltip, anuncio) {
+  var elementoDe = function (evento) {
+    return evento.target.closest ? evento.target.closest(".graf-interactivo") : null;
+  };
+  svg.addEventListener("mouseover", function (evento) {
+    var el = elementoDe(evento);
+    if (el) activarElemento(svg, tooltip, el);
+  });
+  svg.addEventListener("click", function (evento) {
+    var el = elementoDe(evento);
+    if (el) activarElemento(svg, tooltip, el);
+  });
+  svg.addEventListener("mouseleave", function () {
+    if (document.activeElement !== svg) activarElemento(svg, tooltip, null);
+  });
+  svg.addEventListener("blur", function () {
+    activarElemento(svg, tooltip, null);
+  });
+
+  svg.addEventListener("keydown", function (evento) {
+    var lista = elementosVisibles(svg);
+    if (lista.length === 0) return;
+    var actual = lista.indexOf(svg.querySelector(".graf-activo"));
+    var siguiente = null;
+    if (evento.key === "ArrowRight" || evento.key === "ArrowDown") siguiente = actual < 0 ? 0 : Math.min(actual + 1, lista.length - 1);
+    else if (evento.key === "ArrowLeft" || evento.key === "ArrowUp") siguiente = actual < 0 ? 0 : Math.max(actual - 1, 0);
+    else if (evento.key === "Home") siguiente = 0;
+    else if (evento.key === "End") siguiente = lista.length - 1;
+    else if (evento.key === "Escape") {
+      activarElemento(svg, tooltip, null);
+      return;
+    } else {
+      return;
+    }
+    evento.preventDefault();
+    activarElemento(svg, tooltip, lista[siguiente]);
+    anuncio.textContent = (siguiente + 1) + " de " + lista.length + ": " + lista[siguiente].getAttribute("data-tooltip");
+  });
+}
+
+// Leyenda con un botón por serie; al pulsarlo se oculta o muestra esa serie
+function crearLeyenda(svg, series) {
+  var leyenda = document.createElement("div");
+  leyenda.className = "graf-leyenda";
+  leyenda.setAttribute("role", "group");
+  leyenda.setAttribute("aria-label", "Leyenda: pulsa una serie para ocultarla o mostrarla");
+
+  var titulo = document.createElement("p");
+  titulo.className = "graf-leyenda-titulo";
+  titulo.textContent = "Leyenda";
+  leyenda.appendChild(titulo);
+
+  var lista = document.createElement("ul");
+  lista.className = "graf-leyenda-lista";
+  series.forEach(function (serie, i) {
+    var item = document.createElement("li");
+    var boton = document.createElement("button");
+    boton.type = "button";
+    boton.className = "graf-leyenda-item";
+    boton.setAttribute("aria-pressed", "true");
+
+    var muestra = document.createElement("span");
+    muestra.className = "graf-leyenda-muestra" + (serie.forma === "linea" ? " graf-leyenda-muestra--linea" : "");
+    muestra.style.backgroundColor = serie.color;
+    muestra.setAttribute("aria-hidden", "true");
+    var texto = document.createElement("span");
+    texto.textContent = serie.nombre;
+    boton.appendChild(muestra);
+    boton.appendChild(texto);
+
+    boton.addEventListener("click", function () {
+      var visible = boton.getAttribute("aria-pressed") !== "true";
+      boton.setAttribute("aria-pressed", visible ? "true" : "false");
+      var elementos = svg.querySelectorAll('[data-serie="' + i + '"]');
+      for (var k = 0; k < elementos.length; k++) elementos[k].classList.toggle("graf-oculto", !visible);
+      var activo = svg.querySelector(".graf-activo");
+      if (activo && activo.closest(".graf-oculto")) {
+        activarElemento(svg, svg.parentNode.querySelector(".graf-tooltip"), null);
+      }
+    });
+
+    item.appendChild(boton);
+    lista.appendChild(item);
+  });
+  leyenda.appendChild(lista);
+  return leyenda;
+}
+
+// =============================================================================
 // GRÁFICOS
 // =============================================================================
 
@@ -531,7 +761,13 @@ function dibujarHistograma(valores, nombreVariable, numIntervalos) {
     var x = escX(li) + 1;
     var anchoBarra = Math.max(1, escX(ls) - escX(li) - 2);
     var y = escY(it.absoluta);
-    if (it.absoluta > 0) dibujarBarra(g, x, y, anchoBarra, area.abajo - y, color, j);
+    if (it.absoluta > 0) {
+      var cierre = j === intervalos.length - 1 ? "]" : ")";
+      marcarInteractivo(dibujarBarra(g, x, y, anchoBarra, area.abajo - y, color, j),
+        "[" + formatearDato(it.limiteInferior) + " – " + formatearDato(it.limiteSuperior) + cierre +
+        " · Frecuencia: " + it.absoluta +
+        " · Porcentaje: " + formatearNumero(100 * it.absoluta / tabla.total, 1) + " %");
+    }
 
     if (it.absoluta > 0 && anchoBarra >= 14) {
       svgTexto(g, x + anchoBarra / 2, y - 6, String(it.absoluta), 10.5, "middle", "graf-valor");
@@ -554,7 +790,14 @@ function dibujarHistograma(valores, nombreVariable, numIntervalos) {
     svgTexto(ejeX, xe, area.abajo + 19, formatearNumero(limites[e], decimales), 11, "middle", "graf-tick");
   }
 
-  return crearTarjetaGrafico(svg, "histograma", titulo);
+  var modal = intervalos[0];
+  for (var h = 1; h < intervalos.length; h++) if (intervalos[h].absoluta > modal.absoluta) modal = intervalos[h];
+  return crearTarjetaGrafico(svg, "histograma", titulo, {
+    resumen: "Histograma de " + nombreVariable + " con " + intervalos.length + " intervalos entre " +
+      formatearDato(intervalos[0].limiteInferior) + " y " + formatearDato(intervalos[intervalos.length - 1].limiteSuperior) +
+      "; el intervalo más frecuente va de " + formatearDato(modal.limiteInferior) + " a " +
+      formatearDato(modal.limiteSuperior) + " con " + modal.absoluta + " observaciones."
+  });
 }
 
 // === GRÁFICO DE BARRAS ===
@@ -598,7 +841,11 @@ function dibujarBarras(valores, nombreVariable) {
     var x = area.izquierda + j * anchoBanda + separacion / 2;
     var anchoBarra = Math.max(1, anchoBanda - separacion);
     var y = escY(f.absoluta);
-    if (f.absoluta > 0) dibujarBarra(g, x, y, anchoBarra, area.abajo - y, color, j);
+    if (f.absoluta > 0) {
+      marcarInteractivo(dibujarBarra(g, x, y, anchoBarra, area.abajo - y, color, j),
+        String(f.valor) + " · Frecuencia: " + f.absoluta +
+        " · Porcentaje: " + formatearNumero(100 * f.absoluta / tabla.total, 1) + " %");
+    }
 
     if (f.absoluta > 0 && anchoBarra >= 14) {
       svgTexto(g, x + anchoBarra / 2, y - 6, String(f.absoluta), 10.5, "middle", "graf-valor");
@@ -609,7 +856,12 @@ function dibujarBarras(valores, nombreVariable) {
     if (rotar) etiqueta.setAttribute("transform", "rotate(-40 " + cx + " " + (area.abajo + 18) + ")");
   }
 
-  return crearTarjetaGrafico(svg, "barras", titulo);
+  var masFrecuente = filas[0];
+  for (var h = 1; h < filas.length; h++) if (filas[h].absoluta > masFrecuente.absoluta) masFrecuente = filas[h];
+  return crearTarjetaGrafico(svg, "barras", titulo, {
+    resumen: "Gráfico de barras de " + nombreVariable + " con " + filas.length + " categorías; la más frecuente es " +
+      masFrecuente.valor + " con " + masFrecuente.absoluta + " observaciones."
+  });
 }
 
 // === DIAGRAMA DE CAJA Y BIGOTES ===
@@ -668,7 +920,7 @@ function dibujarCaja(valores, nombreVariable) {
   svgLinea(g, cx - anchoBigote / 2, escY(min), cx + anchoBigote / 2, escY(min), "graf-bigote");
 
   // Caja (q3 a q1) con relleno suave
-  svgElemento("rect", {
+  var caja = svgElemento("rect", {
     x: cx - anchoCaja / 2,
     y: escY(q3),
     width: anchoCaja,
@@ -678,13 +930,17 @@ function dibujarCaja(valores, nombreVariable) {
     stroke: color,
     "class": "graf-caja-rect"
   }, g);
+  marcarInteractivo(caja, nombreVariable + " · Mediana: " + formatearDato(q2) + " · Q1: " + formatearDato(q1) +
+    " · Q3: " + formatearDato(q3) + " · Rango intercuartílico: " + formatearDato(iqr) +
+    " · Bigotes: " + formatearDato(min) + " a " + formatearDato(max));
 
   // Mediana (q2)
   svgLinea(g, cx - anchoCaja / 2, escY(q2), cx + anchoCaja / 2, escY(q2), "graf-mediana");
 
   // Atípicos como puntos huecos
   for (var k = 0; k < atipicos.length; k++) {
-    svgCirculo(g, cx, escY(atipicos[k]), 4, "graf-atipico");
+    marcarInteractivo(svgCirculo(g, cx, escY(atipicos[k]), 4, "graf-atipico"),
+      "Valor atípico · " + nombreVariable + ": " + formatearDato(atipicos[k]));
   }
 
   // Etiquetas de los cuantiles (a la derecha de la caja), separadas si quedan muy juntas
@@ -696,7 +952,11 @@ function dibujarCaja(valores, nombreVariable) {
     te.setAttribute("dy", "0.32em");
   }
 
-  return crearTarjetaGrafico(svg, "caja", titulo);
+  return crearTarjetaGrafico(svg, "caja", titulo, {
+    resumen: "Diagrama de caja de " + nombreVariable + " con " + validos.length + " valores: mediana " + formatearDato(q2) +
+      ", Q1 " + formatearDato(q1) + ", Q3 " + formatearDato(q3) + ", bigotes de " + formatearDato(min) + " a " +
+      formatearDato(max) + " y " + atipicos.length + (atipicos.length === 1 ? " valor atípico." : " valores atípicos.")
+  });
 }
 
 // === DISPERSIÓN (con o sin recta de regresión) ===
@@ -719,24 +979,32 @@ function dibujarDispersion(x, y, nombreX, nombreY, reg) {
 
   // Puntos
   var color = colorSerie(0);
-  var puntos = svgElemento("g", { "class": "graf-puntos" }, svg);
+  var nombres = nombresObservaciones(x, y);
+  var puntos = svgElemento("g", { "class": "graf-puntos", "data-serie": 0 }, svg);
   for (var i = 0; i < x.length; i++) {
-    dibujarPunto(puntos, escX(x[i]), escY(y[i]), color, i);
+    marcarInteractivo(dibujarPunto(puntos, escX(x[i]), escY(y[i]), color, i),
+      nombreObservacion(nombres, i) + " · " + nombreX + ": " + formatearDato(x[i]) + " · " + nombreY + ": " + formatearDato(y[i]));
   }
 
   // Recta de regresión con su ecuación y R²
+  var resumen = x.length + " observaciones de " + nombreX + " frente a " + nombreY + ".";
+  var series = [{ nombre: "Observaciones", color: color }];
   if (reg) {
-    svgLinea(svg, escX(rx.min), escY(reg.b0 + reg.b1 * rx.min), escX(rx.max), escY(reg.b0 + reg.b1 * rx.max), "graf-recta");
+    var recta = svgElemento("g", { "data-serie": 1 }, svg);
+    svgLinea(recta, escX(rx.min), escY(reg.b0 + reg.b1 * rx.min), escX(rx.max), escY(reg.b0 + reg.b1 * rx.max), "graf-recta");
 
     var signo = reg.b1 < 0 ? " − " : " + ";
     var partes = ["Ŷ = " + formatearCoeficiente(reg.b0) + signo + formatearCoeficiente(Math.abs(reg.b1)) + "·X"];
     if (reg.r2 !== null && reg.r2 !== undefined) partes.push("R² = " + formatearNumero(reg.r2, 3));
     // Pendiente positiva: la esquina superior izquierda suele quedar libre; negativa: la derecha
     var aLaDerecha = reg.b1 < 0;
-    dibujarEtiquetaConFondo(svg, aLaDerecha ? plano.area.derecha - 8 : plano.area.izquierda + 8, plano.area.arriba + 16, partes, aLaDerecha ? "end" : "start", "graf-etiqueta-recta");
+    dibujarEtiquetaConFondo(recta, aLaDerecha ? plano.area.derecha - 8 : plano.area.izquierda + 8, plano.area.arriba + 16, partes, aLaDerecha ? "end" : "start", "graf-etiqueta-recta");
+
+    resumen += " Recta ajustada: " + partes.join(", ") + ".";
+    series.push({ nombre: "Recta ajustada", color: colorSerie(3), forma: "linea" });
   }
 
-  return crearTarjetaGrafico(svg, "dispersion", titulo);
+  return crearTarjetaGrafico(svg, "dispersion", titulo, { resumen: resumen, series: series });
 }
 
 // === GRÁFICO DE CLUSTERS ===
@@ -778,13 +1046,20 @@ function dibujarClusters(matriz, asignaciones, nombresVariables, centroides, esM
   // Elipses punteadas semitransparentes (recortadas al área de trazado)
   var elipses = svgElemento("g", { "class": "graf-elipses", "clip-path": recorteArea(svg, plano.area) }, svg);
   for (var e = 0; e < grupos.length; e++) {
-    if (grupos[e]) dibujarElipseGrupo(elipses, grupos[e], colorSerie(e));
+    if (grupos[e]) {
+      var elipse = dibujarElipseGrupo(elipses, grupos[e], colorSerie(e));
+      elipse.setAttribute("data-serie", e);
+    }
   }
 
   // Puntos
+  var nombres = nombresObservaciones(xs, ys);
   var puntos = svgElemento("g", { "class": "graf-puntos" }, svg);
   for (var p = 0; p < matriz.length; p++) {
-    dibujarPunto(puntos, escX(xs[p]), escY(ys[p]), colorSerie(asignaciones[p]), p);
+    marcarInteractivo(dibujarPunto(puntos, escX(xs[p]), escY(ys[p]), colorSerie(asignaciones[p]), p),
+      nombreObservacion(nombres, p) + " · Cluster " + (asignaciones[p] + 1) +
+      " · " + nombresVariables[0] + ": " + formatearDato(xs[p]) + " · " + nombresVariables[1] + ": " + formatearDato(ys[p]),
+      asignaciones[p]);
   }
 
   // Centroides o medoides marcados con "×"
@@ -793,15 +1068,31 @@ function dibujarClusters(matriz, asignaciones, nombresVariables, centroides, esM
     for (var c2 = 0; c2 < centroides.length; c2++) {
       var cx = escX(centroides[c2][0]);
       var cy = escY(centroides[c2][1]);
-      dibujarCruz(marcas, cx, cy, colorSerie(c2));
+      var marca = svgElemento("g", { "data-serie": c2 }, marcas);
+      marcarInteractivo(dibujarCruz(marca, cx, cy, colorSerie(c2)),
+        (esMedoide ? "Medoide C" : "Centroide C") + (c2 + 1) +
+        " · Observaciones: " + (grupos[c2] ? grupos[c2].length : 0) + " · " + nombresVariables[0] + ": " + formatearDato(centroides[c2][0]) +
+        " · " + nombresVariables[1] + ": " + formatearDato(centroides[c2][1]));
       // La etiqueta va al lado con más espacio para no salirse del área
       var aLaIzquierda = cx > plano.area.derecha - 30;
-      var te = svgTexto(marcas, aLaIzquierda ? cx - 10 : cx + 10, cy, "C" + (c2 + 1), 11, aLaIzquierda ? "end" : "start", "graf-valor-fuerte graf-halo");
+      var te = svgTexto(marca, aLaIzquierda ? cx - 10 : cx + 10, cy, "C" + (c2 + 1), 11, aLaIzquierda ? "end" : "start", "graf-valor-fuerte graf-halo");
       te.setAttribute("dy", "0.32em");
     }
   }
 
-  return crearTarjetaGrafico(svg, "clusters", titulo);
+  var series = [];
+  var tamanos = [];
+  for (var s = 0; s < grupos.length; s++) {
+    var n = grupos[s] ? grupos[s].length : 0;
+    series.push({ nombre: "Cluster " + (s + 1) + " (" + n + ")", color: colorSerie(s) });
+    tamanos.push("cluster " + (s + 1) + ": " + n);
+  }
+  return crearTarjetaGrafico(svg, "clusters", titulo, {
+    resumen: matriz.length + " observaciones agrupadas en " + grupos.length + " clusters con " +
+      (esMedoide ? "K-medoids" : "K-means") + " (" + tamanos.join(", ") + "), según " +
+      nombresVariables[0] + " y " + nombresVariables[1] + ".",
+    series: series
+  });
 }
 
 // Plano cartesiano común a dispersión y clusters: escalas, rejilla y ejes
