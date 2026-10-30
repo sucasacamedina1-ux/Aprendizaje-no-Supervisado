@@ -1,0 +1,39 @@
+/* ==========================================================================
+   P1 · Carlos — Estilos base y layout (prefijos .app- / .nav-)
+   Se carga después de estilos.css (heredado) y de variables.css.
+   ========================================================================== */
+
+/* --- Reset suave y tipografía --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-fondo, #f0fdfa);
+  color: var(--color-texto, #1e293b);
+  font-family: var(--fuente, 'Inter', sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Botones, campos y selects heredan la fuente del sistema de diseño */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Foco visible con teclado en toda la app */
+:focus-visible {
+  outline: 2px solid var(--color-primario, #0f766e);
+  outline-offset: 2px;
+}

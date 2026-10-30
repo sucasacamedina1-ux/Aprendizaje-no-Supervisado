@@ -16,14 +16,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- Estilos heredados (se mantienen mientras cada parte migra su sección) -->
   <link rel="stylesheet" href="css/estilos.css">
-  <!-- Sugerencia: Modularizar CSS para que cada persona trabaje en su archivo:
-  <link rel="stylesheet" href="css/base.css">         <-- Persona 1
-  <link rel="stylesheet" href="css/tabla.css">        <-- Persona 2
-  <link rel="stylesheet" href="css/estadistica.css">  <-- Persona 3
-  <link rel="stylesheet" href="css/aprendizaje.css">  <-- Persona 4
-  <link rel="stylesheet" href="css/graficos.css">     <-- Persona 5
-  <link rel="stylesheet" href="css/resultados.css">   <-- Persona 6
+  <!-- Sistema de diseño (P1): siempre primero -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <!-- Cada parte descomenta SU línea (después de variables.css y base.css):
+  <link rel="stylesheet" href="css/tabla.css">
+  <link rel="stylesheet" href="css/estadistica.css">
+  <link rel="stylesheet" href="css/aprendizaje.css">
+  <link rel="stylesheet" href="css/graficos.css">
+  <link rel="stylesheet" href="css/resultados.css">
   -->
 </head>
 <body>

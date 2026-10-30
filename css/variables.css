@@ -1,0 +1,52 @@
+/* ==========================================================================
+   P1 · Carlos — Sistema de diseño de UNSA-Stat (variables globales)
+   Todas las partes usan var(--nombre). Si una variable falta, cada parte
+   escribe var(--nombre, respaldo) con estos mismos valores.
+   ========================================================================== */
+
+:root {
+  /* --- Marca (tema verde azulado / teal) --- */
+  --color-primario: #0f766e;
+  --color-primario-oscuro: #115e59;
+  --color-secundario: #14b8a6;
+
+  /* --- Fondos y superficies --- */
+  --color-fondo: #f0fdfa;          /* menta muy claro */
+  --color-superficie: #ffffff;     /* tarjetas */
+  --color-borde: #e2e8f0;
+
+  /* --- Texto --- */
+  --color-texto: #1e293b;
+  --color-texto-suave: #64748b;
+
+  /* --- Estados --- */
+  --color-exito: #059669;
+  --color-error: #dc2626;
+  --color-aviso: #d97706;
+  --color-info: #2563eb;
+
+  /* Fondos suaves y texto oscuro por estado (badges, avisos, banners) */
+  --color-exito-fondo: #ecfdf5;
+  --color-exito-texto: #065f46;
+  --color-error-fondo: #fef2f2;
+  --color-error-texto: #991b1b;
+  --color-aviso-fondo: #fffbeb;
+  --color-aviso-texto: #92400e;
+  --color-info-fondo: #eff6ff;
+  --color-info-texto: #1e40af;
+
+  /* --- Forma y profundidad --- */
+  --radio: 8px;
+  --sombra-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --sombra-md: 0 4px 12px rgba(15, 23, 42, 0.10);
+
+  /* --- Tipografía --- */
+  --fuente: 'Inter', sans-serif;
+
+  /* --- Paleta de gráficos (P5) --- */
+  --graf-azul: #3b82f6;
+  --graf-purpura: #8b5cf6;
+  --graf-esmeralda: #10b981;
+  --graf-coral: #f43f5e;
+  --graf-rejilla: #f1f5f9;
+}
