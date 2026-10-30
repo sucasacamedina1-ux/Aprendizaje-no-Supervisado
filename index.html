@@ -17,6 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/estilos.css">
+  <link rel="stylesheet" href="css/estadistica.css"> <!-- P3 · Blanca -->
   <!-- Sugerencia: Modularizar CSS para que cada persona trabaje en su archivo:
   <link rel="stylesheet" href="css/base.css">         <-- Persona 1
   <link rel="stylesheet" href="css/tabla.css">        <-- Persona 2
@@ -108,109 +109,186 @@
          ======================================================================== -->
     <section id="seccion-estadistica" style="display:none">
       <h2>Estadística</h2>
-
-      <!-- Tarjeta / Grupo: Univariado -->
-      <h3>Análisis univariado</h3>
-      <label>Variable:
-        <select id="select-variable-univariada"></select>
-      </label>
-      <button id="btn-resumen-univariado">Resumen completo</button>
-      <button id="btn-frecuencias">Tabla de frecuencias</button>
-
-      <!-- Tarjeta / Grupo: Intervalos -->
-      <h3>Frecuencias por intervalos</h3>
-      <label>Variable:
-        <select id="select-variable-intervalos"></select>
-      </label>
-      <label>N.º intervalos:
-        <input type="number" id="input-num-intervalos" value="5" min="1" style="width:60px">
-      </label>
-      <button id="btn-intervalos">Generar intervalos</button>
-
-      <!-- Tarjeta / Grupo: Multivariado -->
-      <h3>Análisis multivariado</h3>
-      <label>Variable X:
-        <select id="select-x-multi"></select>
-      </label>
-      <label>Variable Y:
-        <select id="select-y-multi"></select>
-      </label>
-      <button id="btn-cov-cor">Covarianza y correlación</button>
-
-      <!-- Tarjeta / Grupo: Matrices -->
-      <h3>Matrices</h3>
-      <label>Variables (Ctrl+clic):
-        <select id="select-matriz" multiple size="5"></select>
-      </label>
-      <button id="btn-matriz-cov">Matriz de covarianzas</button>
-      <button id="btn-matriz-cor">Matriz de correlaciones</button>
-
-      <!-- Tarjeta / Grupo: Regresión Simple -->
-      <h3>Regresión lineal simple</h3>
-      <label>X:
-        <select id="select-x-reg"></select>
-      </label>
-      <label>Y:
-        <select id="select-y-reg"></select>
-      </label>
-      <button id="btn-reg-simple">Regresión simple</button>
-
-      <!-- Tarjeta / Grupo: Regresión Múltiple -->
-      <h3>Regresión lineal múltiple</h3>
-      <label>Y:
-        <select id="select-y-regmul"></select>
-      </label>
-      <label>Variables X (Ctrl+clic):
-        <select id="select-x-regmul" multiple size="5"></select>
-      </label>
-      <button id="btn-reg-multiple">Regresión múltiple</button>
-
-      <!-- Tarjeta / Grupo: Inferencia y Pruebas de Hipótesis -->
-      <h3>Inferencia</h3>
-      <label>Variable:
-        <select id="select-inf-var"></select>
-      </label>
-      <label>Nivel de confianza:
-        <select id="select-nivel">
-          <option value="0.90">90%</option>
-          <option value="0.95" selected>95%</option>
-          <option value="0.99">99%</option>
-        </select>
-      </label>
-
-      <div style="margin-top:8px">
-        <button id="btn-ic-media">IC para la media</button>
-      </div>
-
-      <div style="margin-top:8px">
-        <label>H₀: μ = <input type="number" id="input-mu0" value="0" style="width:80px"></label>
-        <button id="btn-t-una-media">Prueba t (una media)</button>
-      </div>
-
-      <div style="margin-top:8px">
-        <label>Grupo 1:
-          <select id="select-grupo1"></select>
-        </label>
-        <label>Grupo 2:
-          <select id="select-grupo2"></select>
-        </label>
-        <button id="btn-t-dos-medias">Prueba t (dos medias)</button>
-      </div>
-
-      <div style="margin-top:8px">
-        <label>Éxitos: <input type="number" id="input-exitos" value="0" style="width:60px"></label>
-        <label>Total: <input type="number" id="input-total" value="1" style="width:60px"></label>
-        <button id="btn-ic-proporcion">IC para proporción</button>
-      </div>
-
-      <div style="margin-top:8px">
-        <label>X:
-          <select id="select-x-pend"></select>
-        </label>
-        <label>Y:
-          <select id="select-y-pend"></select>
-        </label>
-        <button id="btn-prueba-pendiente">Prueba t para pendiente</button>
+      <p class="est-intro">Abre una tarjeta, elige las variables y ejecuta el análisis. El nivel de confianza de Inferencia se aplica a todas sus pruebas.</p>
+      <div class="est-cuadricula">
+        <details class="est-tarjeta" id="est-tarjeta-univariado" open>
+          <summary class="est-tarjeta-resumen">
+            <span class="est-icono" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>
+            <span class="est-tarjeta-textos"><span class="est-tarjeta-titulo">Análisis univariado y frecuencias</span><span class="est-tarjeta-desc">Resumen descriptivo y tablas de frecuencias de una variable.</span></span>
+            <svg class="est-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6"/></svg>
+          </summary>
+          <div class="est-tarjeta-cuerpo">
+          <div class="est-grupo">
+            <h4 class="est-grupo-titulo">Resumen de una variable</h4>
+            <div class="est-campos">
+            <label class="est-campo" for="select-variable-univariada">
+              <span class="est-etiqueta">Variable</span>
+              <span class="est-select"><select id="select-variable-univariada"></select></span>
+            </label>
+            </div>
+            <div class="est-acciones"><button type="button" id="btn-resumen-univariado" class="est-btn est-btn--primario">Resumen completo</button> <button type="button" id="btn-frecuencias" class="est-btn est-btn--secundario">Tabla de frecuencias</button></div>
+          </div>
+          <div class="est-grupo">
+            <h4 class="est-grupo-titulo">Frecuencias por intervalos</h4>
+            <div class="est-campos">
+            <label class="est-campo" for="select-variable-intervalos">
+              <span class="est-etiqueta">Variable numérica</span>
+              <span class="est-select"><select id="select-variable-intervalos"></select></span>
+            </label>
+            <label class="est-campo est-campo--corto" for="input-num-intervalos">
+              <span class="est-etiqueta">N.º de intervalos</span>
+              <input type="number" id="input-num-intervalos" value="5" min="1">
+            </label>
+            </div>
+            <div class="est-acciones"><button type="button" id="btn-intervalos" class="est-btn est-btn--primario">Generar intervalos</button></div>
+          </div>
+          </div>
+        </details>
+        <details class="est-tarjeta" id="est-tarjeta-multivariado">
+          <summary class="est-tarjeta-resumen">
+            <span class="est-icono" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 20L20 4M7 7a1.5 1.5 0 1 0 0-.01M12 14a1.5 1.5 0 1 0 0-.01M17 9a1.5 1.5 0 1 0 0-.01"/></svg></span>
+            <span class="est-tarjeta-textos"><span class="est-tarjeta-titulo">Análisis multivariado y matrices</span><span class="est-tarjeta-desc">Covarianza, correlación y matrices entre varias variables.</span></span>
+            <svg class="est-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6"/></svg>
+          </summary>
+          <div class="est-tarjeta-cuerpo">
+          <div class="est-grupo">
+            <h4 class="est-grupo-titulo">Dos variables</h4>
+            <div class="est-campos">
+            <label class="est-campo" for="select-x-multi">
+              <span class="est-etiqueta">Variable X</span>
+              <span class="est-select"><select id="select-x-multi"></select></span>
+            </label>
+            <label class="est-campo" for="select-y-multi">
+              <span class="est-etiqueta">Variable Y</span>
+              <span class="est-select"><select id="select-y-multi"></select></span>
+            </label>
+            </div>
+            <div class="est-acciones"><button type="button" id="btn-cov-cor" class="est-btn est-btn--primario">Covarianza y correlación</button></div>
+          </div>
+          <div class="est-grupo">
+            <h4 class="est-grupo-titulo">Matrices</h4>
+            <div class="est-campos">
+            <label class="est-campo est-campo--multiple" for="select-matriz">
+              <span class="est-etiqueta">Variables</span>
+              <select id="select-matriz" class="est-multiple" multiple size="5" aria-describedby="select-matriz-ayuda"></select>
+              <span class="est-ayuda" id="select-matriz-ayuda">Ctrl/Cmd + clic para elegir varias</span>
+            </label>
+            </div>
+            <div class="est-acciones"><button type="button" id="btn-matriz-cor" class="est-btn est-btn--primario">Matriz de correlaciones</button> <button type="button" id="btn-matriz-cov" class="est-btn est-btn--secundario">Matriz de covarianzas</button></div>
+          </div>
+          </div>
+        </details>
+        <details class="est-tarjeta" id="est-tarjeta-regresion">
+          <summary class="est-tarjeta-resumen">
+            <span class="est-icono" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M3 3v18h18M6 16l12-9"/></svg></span>
+            <span class="est-tarjeta-textos"><span class="est-tarjeta-titulo">Regresión lineal</span><span class="est-tarjeta-desc">Modelos simple y múltiple con sus coeficientes y R².</span></span>
+            <svg class="est-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6"/></svg>
+          </summary>
+          <div class="est-tarjeta-cuerpo">
+          <div class="est-grupo">
+            <h4 class="est-grupo-titulo">Regresión simple</h4>
+            <div class="est-campos">
+            <label class="est-campo" for="select-x-reg">
+              <span class="est-etiqueta">Variable X (independiente)</span>
+              <span class="est-select"><select id="select-x-reg"></select></span>
+            </label>
+            <label class="est-campo" for="select-y-reg">
+              <span class="est-etiqueta">Variable Y (dependiente)</span>
+              <span class="est-select"><select id="select-y-reg"></select></span>
+            </label>
+            </div>
+            <div class="est-acciones"><button type="button" id="btn-reg-simple" class="est-btn est-btn--primario">Generar regresión simple</button></div>
+          </div>
+          <div class="est-grupo">
+            <h4 class="est-grupo-titulo">Regresión múltiple</h4>
+            <div class="est-campos">
+            <label class="est-campo" for="select-y-regmul">
+              <span class="est-etiqueta">Variable Y (dependiente)</span>
+              <span class="est-select"><select id="select-y-regmul"></select></span>
+            </label>
+            <label class="est-campo est-campo--multiple" for="select-x-regmul">
+              <span class="est-etiqueta">Variables X</span>
+              <select id="select-x-regmul" class="est-multiple" multiple size="5" aria-describedby="select-x-regmul-ayuda"></select>
+              <span class="est-ayuda" id="select-x-regmul-ayuda">Ctrl/Cmd + clic para elegir varias</span>
+            </label>
+            </div>
+            <div class="est-acciones"><button type="button" id="btn-reg-multiple" class="est-btn est-btn--primario">Generar regresión múltiple</button></div>
+          </div>
+          </div>
+        </details>
+        <details class="est-tarjeta" id="est-tarjeta-inferencia">
+          <summary class="est-tarjeta-resumen">
+            <span class="est-icono" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 3v18M5 7h14M7 7l-3 7a3 3 0 0 0 6 0zM17 7l-3 7a3 3 0 0 0 6 0z"/></svg></span>
+            <span class="est-tarjeta-textos"><span class="est-tarjeta-titulo">Pruebas de inferencia e intervalos de confianza</span><span class="est-tarjeta-desc">Intervalos de confianza y pruebas t con el nivel elegido.</span></span>
+            <svg class="est-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6"/></svg>
+          </summary>
+          <div class="est-tarjeta-cuerpo">
+          <div class="est-grupo">
+            <h4 class="est-grupo-titulo">Media de una variable</h4>
+            <div class="est-campos">
+            <label class="est-campo" for="select-inf-var">
+              <span class="est-etiqueta">Variable</span>
+              <span class="est-select"><select id="select-inf-var"></select></span>
+            </label>
+            <label class="est-campo" for="select-nivel">
+              <span class="est-etiqueta">Nivel de confianza</span>
+              <span class="est-select"><select id="select-nivel">
+                <option value="0.90">90%</option>
+                <option value="0.95" selected>95%</option>
+                <option value="0.99">99%</option>
+              </select></span>
+            </label>
+            <label class="est-campo est-campo--corto" for="input-mu0">
+              <span class="est-etiqueta">H₀: μ =</span>
+              <input type="number" id="input-mu0" value="0">
+            </label>
+            </div>
+            <div class="est-acciones"><button type="button" id="btn-ic-media" class="est-btn est-btn--primario">IC para la media</button> <button type="button" id="btn-t-una-media" class="est-btn est-btn--secundario">Prueba t (una media)</button></div>
+          </div>
+          <div class="est-grupo">
+            <h4 class="est-grupo-titulo">Dos medias independientes</h4>
+            <div class="est-campos">
+            <label class="est-campo" for="select-grupo1">
+              <span class="est-etiqueta">Grupo 1</span>
+              <span class="est-select"><select id="select-grupo1"></select></span>
+            </label>
+            <label class="est-campo" for="select-grupo2">
+              <span class="est-etiqueta">Grupo 2</span>
+              <span class="est-select"><select id="select-grupo2"></select></span>
+            </label>
+            </div>
+            <div class="est-acciones"><button type="button" id="btn-t-dos-medias" class="est-btn est-btn--primario">Prueba t (dos medias)</button></div>
+          </div>
+          <div class="est-grupo">
+            <h4 class="est-grupo-titulo">Proporción</h4>
+            <div class="est-campos">
+            <label class="est-campo est-campo--corto" for="input-exitos">
+              <span class="est-etiqueta">Éxitos</span>
+              <input type="number" id="input-exitos" value="0" min="0">
+            </label>
+            <label class="est-campo est-campo--corto" for="input-total">
+              <span class="est-etiqueta">Total</span>
+              <input type="number" id="input-total" value="1" min="1">
+            </label>
+            </div>
+            <div class="est-acciones"><button type="button" id="btn-ic-proporcion" class="est-btn est-btn--primario">IC para proporción</button></div>
+          </div>
+          <div class="est-grupo">
+            <h4 class="est-grupo-titulo">Pendiente de regresión</h4>
+            <div class="est-campos">
+            <label class="est-campo" for="select-x-pend">
+              <span class="est-etiqueta">Variable X</span>
+              <span class="est-select"><select id="select-x-pend"></select></span>
+            </label>
+            <label class="est-campo" for="select-y-pend">
+              <span class="est-etiqueta">Variable Y</span>
+              <span class="est-select"><select id="select-y-pend"></select></span>
+            </label>
+            </div>
+            <div class="est-acciones"><button type="button" id="btn-prueba-pendiente" class="est-btn est-btn--primario">Prueba t para pendiente</button></div>
+          </div>
+          </div>
+        </details>
       </div>
     </section>
 
