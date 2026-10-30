@@ -281,43 +281,131 @@
          ======================================================================== -->
     <section id="seccion-graficos" style="display:none">
       <h2>Gráficos</h2>
+      <p class="graf-intro">Elige un tipo de gráfico, selecciona las variables y genéralo. El gráfico se abre en <strong>Resultados</strong>, donde puedes explorarlo y descargarlo.</p>
 
-      <h3>Histograma</h3>
-      <label>Variable:
-        <select id="select-graf-hist"></select>
-      </label>
-      <label>N.º intervalos:
-        <input type="number" id="input-graf-hist-int" value="5" min="1" style="width:60px">
-      </label>
-      <button id="btn-graf-histograma">Generar histograma</button>
+      <!-- Selector de tipo (pestañas con miniaturas). Las flechas cambian de tipo. -->
+      <div class="graf-selector" role="tablist" aria-label="Tipo de gráfico">
+        <button type="button" class="graf-opcion" role="tab" id="graf-tab-histograma" aria-selected="true" aria-controls="graf-panel-histograma">
+          <svg class="graf-miniatura" viewBox="0 0 48 32" aria-hidden="true" focusable="false">
+            <path class="graf-mini-base" d="M3 29h42"/>
+            <rect class="graf-mini-a" x="6" y="19" width="7" height="10" rx="1"/>
+            <rect class="graf-mini-a" x="13" y="9" width="7" height="20" rx="1"/>
+            <rect class="graf-mini-a" x="20" y="4" width="7" height="25" rx="1"/>
+            <rect class="graf-mini-a" x="27" y="12" width="7" height="17" rx="1"/>
+            <rect class="graf-mini-a" x="34" y="22" width="7" height="7" rx="1"/>
+          </svg>
+          <span class="graf-opcion-texto"><strong>Histograma</strong><span>Distribución por intervalos</span></span>
+        </button>
+        <button type="button" class="graf-opcion" role="tab" id="graf-tab-barras" aria-selected="false" aria-controls="graf-panel-barras" tabindex="-1">
+          <svg class="graf-miniatura" viewBox="0 0 48 32" aria-hidden="true" focusable="false">
+            <path class="graf-mini-base" d="M3 29h42"/>
+            <rect class="graf-mini-a" x="7" y="14" width="7" height="15" rx="1.5"/>
+            <rect class="graf-mini-b" x="17" y="6" width="7" height="23" rx="1.5"/>
+            <rect class="graf-mini-c" x="27" y="17" width="7" height="12" rx="1.5"/>
+            <rect class="graf-mini-d" x="37" y="10" width="7" height="19" rx="1.5"/>
+          </svg>
+          <span class="graf-opcion-texto"><strong>Barras</strong><span>Frecuencia por categoría</span></span>
+        </button>
+        <button type="button" class="graf-opcion" role="tab" id="graf-tab-caja" aria-selected="false" aria-controls="graf-panel-caja" tabindex="-1">
+          <svg class="graf-miniatura" viewBox="0 0 48 32" aria-hidden="true" focusable="false">
+            <path class="graf-mini-linea" d="M24 3v7M24 23v6M19 3h10M19 29h10"/>
+            <rect class="graf-mini-caja" x="14" y="10" width="20" height="13" rx="2"/>
+            <path class="graf-mini-mediana" d="M14 15h20"/>
+            <circle class="graf-mini-hueco" cx="40" cy="5" r="2"/>
+          </svg>
+          <span class="graf-opcion-texto"><strong>Caja y bigotes</strong><span>Cuartiles y atípicos</span></span>
+        </button>
+        <button type="button" class="graf-opcion" role="tab" id="graf-tab-dispersion" aria-selected="false" aria-controls="graf-panel-dispersion" tabindex="-1">
+          <svg class="graf-miniatura" viewBox="0 0 48 32" aria-hidden="true" focusable="false">
+            <path class="graf-mini-base" d="M3 29h42M3 29V3"/>
+            <path class="graf-mini-recta" d="M7 25L43 6"/>
+            <circle class="graf-mini-a" cx="10" cy="21" r="2.5"/>
+            <circle class="graf-mini-a" cx="17" cy="22" r="2.5"/>
+            <circle class="graf-mini-a" cx="22" cy="15" r="2.5"/>
+            <circle class="graf-mini-a" cx="30" cy="14" r="2.5"/>
+            <circle class="graf-mini-a" cx="36" cy="7" r="2.5"/>
+            <circle class="graf-mini-a" cx="40" cy="12" r="2.5"/>
+          </svg>
+          <span class="graf-opcion-texto"><strong>Dispersión</strong><span>Relación entre dos variables</span></span>
+        </button>
+        <button type="button" class="graf-opcion" role="tab" id="graf-tab-clusters" aria-selected="false" aria-controls="graf-panel-clusters" tabindex="-1">
+          <svg class="graf-miniatura" viewBox="0 0 48 32" aria-hidden="true" focusable="false">
+            <ellipse class="graf-mini-zona-a" cx="14" cy="20" rx="11" ry="8"/>
+            <ellipse class="graf-mini-zona-b" cx="34" cy="11" rx="11" ry="8"/>
+            <circle class="graf-mini-a" cx="10" cy="21" r="2.3"/>
+            <circle class="graf-mini-a" cx="16" cy="24" r="2.3"/>
+            <circle class="graf-mini-a" cx="17" cy="17" r="2.3"/>
+            <circle class="graf-mini-b" cx="30" cy="8" r="2.3"/>
+            <circle class="graf-mini-b" cx="37" cy="13" r="2.3"/>
+            <circle class="graf-mini-b" cx="38" cy="7" r="2.3"/>
+          </svg>
+          <span class="graf-opcion-texto"><strong>Clústeres</strong><span>K-means y K-medoids</span></span>
+        </button>
+      </div>
 
-      <h3>Gráfico de barras</h3>
-      <label>Variable:
-        <select id="select-graf-barras"></select>
-      </label>
-      <button id="btn-graf-barras">Generar barras</button>
+      <div class="graf-panel" role="tabpanel" id="graf-panel-histograma" aria-labelledby="graf-tab-histograma">
+        <div class="graf-campos">
+          <label class="graf-campo">
+            <span class="graf-campo-etiqueta">Variable numérica</span>
+            <span class="graf-campo-select"><select id="select-graf-hist"></select></span>
+          </label>
+          <label class="graf-campo graf-campo--corto">
+            <span class="graf-campo-etiqueta">N.º de intervalos</span>
+            <input type="number" id="input-graf-hist-int" value="5" min="1">
+          </label>
+        </div>
+        <button type="button" id="btn-graf-histograma" class="graf-generar">Generar histograma</button>
+      </div>
 
-      <h3>Diagrama de caja y bigotes</h3>
-      <label>Variable:
-        <select id="select-graf-caja"></select>
-      </label>
-      <button id="btn-graf-caja">Generar caja</button>
+      <div class="graf-panel" role="tabpanel" id="graf-panel-barras" aria-labelledby="graf-tab-barras" hidden>
+        <div class="graf-campos">
+          <label class="graf-campo">
+            <span class="graf-campo-etiqueta">Variable</span>
+            <span class="graf-campo-select"><select id="select-graf-barras"></select></span>
+          </label>
+        </div>
+        <button type="button" id="btn-graf-barras" class="graf-generar">Generar barras</button>
+      </div>
 
-      <h3>Dispersión</h3>
-      <label>X:
-        <select id="select-graf-disp-x"></select>
-      </label>
-      <label>Y:
-        <select id="select-graf-disp-y"></select>
-      </label>
-      <label>
-        <input type="checkbox" id="check-graf-recta"> Incluir recta de regresión
-      </label>
-      <button id="btn-graf-dispersion">Generar dispersión</button>
+      <div class="graf-panel" role="tabpanel" id="graf-panel-caja" aria-labelledby="graf-tab-caja" hidden>
+        <div class="graf-campos">
+          <label class="graf-campo">
+            <span class="graf-campo-etiqueta">Variable numérica</span>
+            <span class="graf-campo-select"><select id="select-graf-caja"></select></span>
+          </label>
+        </div>
+        <button type="button" id="btn-graf-caja" class="graf-generar">Generar caja</button>
+      </div>
 
-      <p style="font-size:12px; color:#555; margin-top:10px;">
-        Los gráficos de clusters se generan automáticamente al ejecutar K-means o K-medoids.
-      </p>
+      <div class="graf-panel" role="tabpanel" id="graf-panel-dispersion" aria-labelledby="graf-tab-dispersion" hidden>
+        <div class="graf-campos">
+          <label class="graf-campo">
+            <span class="graf-campo-etiqueta">Variable X (horizontal)</span>
+            <span class="graf-campo-select"><select id="select-graf-disp-x"></select></span>
+          </label>
+          <label class="graf-campo">
+            <span class="graf-campo-etiqueta">Variable Y (vertical)</span>
+            <span class="graf-campo-select"><select id="select-graf-disp-y"></select></span>
+          </label>
+          <label class="graf-casilla">
+            <input type="checkbox" id="check-graf-recta">
+            <span>Incluir recta de regresión</span>
+          </label>
+        </div>
+        <button type="button" id="btn-graf-dispersion" class="graf-generar">Generar dispersión</button>
+      </div>
+
+      <div class="graf-panel" role="tabpanel" id="graf-panel-clusters" aria-labelledby="graf-tab-clusters" hidden>
+        <p class="graf-nota">Los gráficos de clústeres se generan automáticamente al ejecutar K-means o K-medoids en <strong>Aprendizaje no supervisado</strong>, con elipses por grupo y centroides marcados.</p>
+        <button type="button" id="graf-ir-aprendizaje" class="graf-generar graf-generar--secundario">Ir a Aprendizaje no supervisado</button>
+      </div>
+
+      <!-- Área de vista previa: estado vacío con la miniatura del tipo elegido -->
+      <div class="graf-vacio" id="graf-vista-previa">
+        <div class="graf-vacio-icono" aria-hidden="true"></div>
+        <p class="graf-vacio-titulo">Elige variables y un tipo de gráfico para empezar</p>
+        <p class="graf-vacio-texto" id="graf-vista-previa-texto">El gráfico aparecerá en Resultados.</p>
+      </div>
     </section>
 
     <!-- ========================================================================

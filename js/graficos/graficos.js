@@ -1347,3 +1347,72 @@ function prepararPlanoXY(rx, ry, titulo, nombreX, nombreY) {
   dibujarEjes(svg, { x: escX, y: escY }, area, { tituloX: nombreX, tituloY: nombreY });
   return { svg: svg, area: area, x: escX, y: escY };
 }
+
+// =============================================================================
+// SELECTOR DE TIPO DE GRÁFICO (sección Gráficos)
+// =============================================================================
+
+// Activa una pestaña: muestra su panel, actualiza la vista previa y, si se pide, la enfoca
+function seleccionarTipoGrafico(pestanas, elegida, enfocar) {
+  for (var i = 0; i < pestanas.length; i++) {
+    var activa = pestanas[i] === elegida;
+    pestanas[i].setAttribute("aria-selected", activa ? "true" : "false");
+    pestanas[i].setAttribute("tabindex", activa ? "0" : "-1");
+    var panel = document.getElementById(pestanas[i].getAttribute("aria-controls"));
+    if (panel) panel.hidden = !activa;
+  }
+  if (enfocar) elegida.focus();
+
+  // Vista previa: miniatura grande del tipo elegido
+  var icono = document.querySelector("#graf-vista-previa .graf-vacio-icono");
+  var miniatura = elegida.querySelector(".graf-miniatura");
+  if (icono && miniatura) {
+    icono.innerHTML = "";
+    icono.appendChild(miniatura.cloneNode(true));
+  }
+  var texto = document.getElementById("graf-vista-previa-texto");
+  if (texto) {
+    texto.textContent = elegida.id === "graf-tab-clusters"
+      ? "Ejecuta K-means o K-medoids para ver los clústeres en Resultados."
+      : "El gráfico aparecerá en Resultados, listo para explorar y descargar.";
+  }
+}
+
+// Pestañas accesibles: clic, flechas, Inicio y Fin (patrón tablist con foco itinerante)
+function inicializarSelectorGraficos() {
+  var selector = document.querySelector("#seccion-graficos .graf-selector");
+  if (!selector) return;
+  var pestanas = Array.prototype.slice.call(selector.querySelectorAll('[role="tab"]'));
+  if (pestanas.length === 0) return;
+
+  pestanas.forEach(function (pestana, i) {
+    pestana.addEventListener("click", function () {
+      seleccionarTipoGrafico(pestanas, pestana, false);
+    });
+    pestana.addEventListener("keydown", function (evento) {
+      var destino = null;
+      if (evento.key === "ArrowRight" || evento.key === "ArrowDown") destino = pestanas[(i + 1) % pestanas.length];
+      else if (evento.key === "ArrowLeft" || evento.key === "ArrowUp") destino = pestanas[(i - 1 + pestanas.length) % pestanas.length];
+      else if (evento.key === "Home") destino = pestanas[0];
+      else if (evento.key === "End") destino = pestanas[pestanas.length - 1];
+      if (!destino) return;
+      evento.preventDefault();
+      seleccionarTipoGrafico(pestanas, destino, true);
+    });
+  });
+
+  // Los clústeres se generan en Aprendizaje: se usa el mismo botón del menú
+  var irAprendizaje = document.getElementById("graf-ir-aprendizaje");
+  if (irAprendizaje) {
+    irAprendizaje.addEventListener("click", function () {
+      var botonNav = document.querySelector('nav [data-seccion="aprendizaje"]');
+      if (botonNav) botonNav.click();
+      else if (typeof mostrarSeccion === "function") mostrarSeccion("aprendizaje");
+    });
+  }
+
+  var inicial = selector.querySelector('[aria-selected="true"]') || pestanas[0];
+  seleccionarTipoGrafico(pestanas, inicial, false);
+}
+
+document.addEventListener("DOMContentLoaded", inicializarSelectorGraficos);
