@@ -17,6 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/estilos.css">
+  <link rel="stylesheet" href="css/aprendizaje.css"> <!-- P4 · Karina -->
   <!-- Sugerencia: Modularizar CSS para que cada persona trabaje en su archivo:
   <link rel="stylesheet" href="css/base.css">         <-- Persona 1
   <link rel="stylesheet" href="css/tabla.css">        <-- Persona 2
@@ -229,41 +230,105 @@
          ======================================================================== -->
     <section id="seccion-aprendizaje" style="display:none">
       <h2>Aprendizaje no supervisado</h2>
+      <p class="apr-intro">Elige las variables, ajusta los hiperparámetros y el algoritmo, y ejecuta el agrupamiento. El resultado se abre en Resultados.</p>
 
-      <h3>Configuración común</h3>
-      <label>Variables (Ctrl+clic, mínimo 2):
-        <select id="select-vars-cluster" multiple size="6"></select>
-      </label>
-      <br>
-      <label>Número de clusters K:
-        <input type="number" id="input-k" value="2" min="1" style="width:60px">
-      </label>
-      <label>Máx. iteraciones:
-        <input type="number" id="input-max-iter" value="100" min="1" style="width:70px">
-      </label>
-      <br>
-      <label>
-        <input type="checkbox" id="check-estandarizar"> Estandarizar datos (media 0, desviación 1)
-      </label>
-      <br>
-      <label>Tipo de distancia:
-        <select id="select-distancia">
-          <option value="euclidiana">Euclidiana</option>
-          <option value="manhattan">Manhattan</option>
-          <option value="minkowski">Minkowski</option>
-        </select>
-      </label>
-      <label>q (Minkowski):
-        <input type="number" id="input-q-minkowski" value="2" min="1" step="0.5" style="width:60px">
-      </label>
+      <div class="apr-panel">
+        <!-- Columna 1: datos -->
+        <div class="apr-bloque">
+          <h3 class="apr-bloque-titulo"><span class="apr-paso" aria-hidden="true">1</span>Variables</h3>
+          <label class="apr-campo" for="select-vars-cluster">
+            <span class="apr-etiqueta">Variables numéricas (mínimo 2)</span>
+            <select id="select-vars-cluster" class="apr-multiple" multiple size="6" aria-describedby="apr-vars-ayuda"></select>
+            <span class="apr-texto-ayuda" id="apr-vars-ayuda">Ctrl/Cmd + clic para elegir varias. El gráfico usa las 2 primeras.</span>
+          </label>
 
-      <h3>Algoritmos</h3>
-      <button id="btn-kmeans">Ejecutar K-means</button>
-      <button id="btn-kmedoids">Ejecutar K-medoids</button>
+          <label class="apr-switch" for="check-estandarizar">
+            <input type="checkbox" id="check-estandarizar" class="apr-switch-input" role="switch">
+            <span class="apr-switch-pista" aria-hidden="true"><span class="apr-switch-perilla"></span></span>
+            <span class="apr-switch-texto">
+              <span class="apr-etiqueta">Estandarizar datos</span>
+              <span class="apr-texto-ayuda">Media 0 y desviación 1: recomendado si las variables tienen escalas distintas.</span>
+            </span>
+          </label>
+        </div>
 
-      <p style="font-size:12px; color:#555; margin-top:10px;">
-        Otros métodos (jerárquico, DBSCAN) pendientes de confirmar con el profesor.
-      </p>
+        <!-- Columna 2: hiperparámetros -->
+        <div class="apr-bloque">
+          <h3 class="apr-bloque-titulo"><span class="apr-paso" aria-hidden="true">2</span>Hiperparámetros</h3>
+          <div class="apr-campos">
+            <div class="apr-campo">
+              <span class="apr-etiqueta-fila">
+                <label class="apr-etiqueta" for="input-k">Número de clusters (K)</label>
+                <span class="apr-ayuda">
+                  <button type="button" class="apr-ayuda-boton" aria-label="Ayuda sobre K" aria-describedby="apr-ayuda-k">i</button>
+                  <span class="apr-ayuda-texto" role="tooltip" id="apr-ayuda-k">Cantidad de grupos que se formarán. Prueba varios valores y compara la WCSS o el costo total.</span>
+                </span>
+              </span>
+              <input type="number" id="input-k" value="2" min="1" step="1">
+            </div>
+            <div class="apr-campo">
+              <span class="apr-etiqueta-fila">
+                <label class="apr-etiqueta" for="input-max-iter">Máx. iteraciones</label>
+                <span class="apr-ayuda">
+                  <button type="button" class="apr-ayuda-boton" aria-label="Ayuda sobre las iteraciones" aria-describedby="apr-ayuda-iter">i</button>
+                  <span class="apr-ayuda-texto" role="tooltip" id="apr-ayuda-iter">Límite de repeticiones del algoritmo. Se detiene antes si los centros dejan de cambiar.</span>
+                </span>
+              </span>
+              <input type="number" id="input-max-iter" value="100" min="1">
+            </div>
+            <div class="apr-campo">
+              <span class="apr-etiqueta-fila">
+                <label class="apr-etiqueta" for="select-distancia">Métrica de distancia</label>
+                <span class="apr-ayuda">
+                  <button type="button" class="apr-ayuda-boton" aria-label="Ayuda sobre la distancia" aria-describedby="apr-ayuda-dist">i</button>
+                  <span class="apr-ayuda-texto" role="tooltip" id="apr-ayuda-dist">Euclidiana: distancia en línea recta. Manhattan: suma de diferencias absolutas. Minkowski: generaliza ambas con el parámetro q.</span>
+                </span>
+              </span>
+              <span class="apr-select">
+                <select id="select-distancia">
+                  <option value="euclidiana">Euclidiana</option>
+                  <option value="manhattan">Manhattan</option>
+                  <option value="minkowski">Minkowski</option>
+                </select>
+              </span>
+            </div>
+            <div class="apr-campo" id="apr-campo-q">
+              <span class="apr-etiqueta-fila">
+                <label class="apr-etiqueta" for="input-q-minkowski">Parámetro q (Minkowski)</label>
+                <span class="apr-ayuda">
+                  <button type="button" class="apr-ayuda-boton" aria-label="Ayuda sobre q" aria-describedby="apr-ayuda-q">i</button>
+                  <span class="apr-ayuda-texto" role="tooltip" id="apr-ayuda-q">q = 1 equivale a Manhattan y q = 2 a Euclidiana. Valores mayores dan más peso a la diferencia más grande.</span>
+                </span>
+              </span>
+              <input type="number" id="input-q-minkowski" value="2" min="1" step="0.5">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Algoritmo: tarjetas seleccionables y botón de ejecución -->
+      <div class="apr-bloque apr-bloque--algoritmo">
+        <h3 class="apr-bloque-titulo" id="apr-algoritmo-titulo"><span class="apr-paso" aria-hidden="true">3</span>Algoritmo</h3>
+        <div class="apr-algoritmos" role="radiogroup" aria-labelledby="apr-algoritmo-titulo">
+          <div class="apr-algoritmo" role="radio" aria-checked="true" tabindex="0" data-boton="btn-kmeans">
+            <span class="apr-algoritmo-check" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+            <span class="apr-algoritmo-nombre">K-means</span>
+            <span class="apr-algoritmo-desc">Centrado en medias</span>
+          </div>
+          <div class="apr-algoritmo" role="radio" aria-checked="false" tabindex="-1" data-boton="btn-kmedoids">
+            <span class="apr-algoritmo-check" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+            <span class="apr-algoritmo-nombre">K-medoids</span>
+            <span class="apr-algoritmo-desc">Centrado en puntos reales, robusto a atípicos</span>
+          </div>
+        </div>
+        <div class="apr-ejecutar">
+          <button type="button" id="btn-kmeans" class="apr-btn">Ejecutar K-means</button>
+          <button type="button" id="btn-kmedoids" class="apr-btn" hidden>Ejecutar K-medoids</button>
+          <span class="apr-estado" id="apr-estado" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <p class="apr-nota">Otros métodos (jerárquico, DBSCAN) pendientes de confirmar con el profesor.</p>
     </section>
 
     <!-- ========================================================================
