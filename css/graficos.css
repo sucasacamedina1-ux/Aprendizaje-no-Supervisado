@@ -17,6 +17,118 @@
   position: relative;
 }
 
+/* --- Encabezado: título y menú de descarga --- */
+.graf-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.graf-tarjeta .graf-encabezado-titulo {
+  margin: 0;
+  min-width: 0;
+  color: var(--color-texto, #1e293b);
+  font-family: var(--fuente, 'Inter'), Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.graf-descarga {
+  position: relative;
+  flex: 0 0 auto;
+  margin-left: auto; /* a la derecha aunque pase a otra línea */
+}
+
+.graf-tarjeta .graf-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 7px 10px 7px 12px;
+  background: var(--color-superficie, #ffffff);
+  border: 1px solid var(--color-borde, #e2e8f0);
+  border-radius: var(--radio, 8px);
+  color: var(--color-texto, #1e293b);
+  font-family: var(--fuente, 'Inter'), Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.graf-tarjeta .graf-boton:hover,
+.graf-tarjeta .graf-boton[aria-expanded="true"] {
+  background: var(--color-fondo, #f8fafc);
+  border-color: var(--color-primario, #0f766e);
+}
+
+.graf-tarjeta .graf-boton:focus-visible,
+.graf-menu-item:focus-visible {
+  outline: 2px solid var(--color-primario, #0f766e);
+  outline-offset: 2px;
+}
+
+.graf-tarjeta .graf-icono {
+  display: block;
+  margin: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.graf-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 10;
+  min-width: 220px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--color-superficie, #ffffff);
+  border: 1px solid var(--color-borde, #e2e8f0);
+  border-radius: var(--radio, 8px);
+  box-shadow: var(--sombra-md, 0 4px 12px rgba(15, 23, 42, 0.12));
+}
+
+.graf-menu[hidden] {
+  display: none;
+}
+
+.graf-menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  margin: 0;
+  padding: 8px 10px;
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--radio, 8px) - 2px);
+  color: var(--color-texto, #1e293b);
+  font-family: var(--fuente, 'Inter'), Arial, sans-serif;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.graf-menu-item span {
+  color: var(--color-texto-suave, #64748b);
+  font-size: 12px;
+}
+
+.graf-menu-item:hover,
+.graf-menu-item:focus {
+  background: var(--color-fondo, #f8fafc);
+}
+
 .graf-cuerpo {
   width: 100%;
 }
@@ -365,7 +477,8 @@
 @media (prefers-reduced-motion: reduce) {
   .graf-interactivo,
   .graf-tooltip,
-  .graf-leyenda-item {
+  .graf-leyenda-item,
+  .graf-tarjeta .graf-boton {
     transition: none;
   }
 }

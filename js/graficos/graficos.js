@@ -25,6 +25,17 @@ var GRAF_PALETA = [
 // Contador para ids únicos (clipPath) cuando hay varios gráficos en la página
 var grafContadorIds = 0;
 
+// Franja superior donde el SVG dibuja su título: en pantalla se recorta porque el
+// título ya está en el encabezado de la tarjeta; al descargar se incluye
+var GRAF_FRANJA_TITULO = 34;
+
+// Estilos calculados que se copian al exportar (el archivo no depende del CSS)
+var GRAF_ESTILOS_EXPORTAR = [
+  "display", "visibility", "opacity", "fill", "fill-opacity", "stroke", "stroke-width",
+  "stroke-opacity", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "paint-order",
+  "font-family", "font-size", "font-weight"
+];
+
 // =============================================================================
 // HELPERS BÁSICOS
 // =============================================================================
@@ -72,10 +83,16 @@ function crearTarjetaGrafico(svg, tipo, titulo, opciones) {
   svg.setAttribute("aria-describedby", idBase + "-desc");
   svg.setAttribute("tabindex", "0");
 
+  // En pantalla se oculta la franja del título (el archivo descargado sí la lleva)
+  var vb = svg.getAttribute("viewBox").split(" ").map(Number);
+  svg.setAttribute("data-viewbox-completo", vb.join(" "));
+  svg.setAttribute("viewBox", vb[0] + " " + (vb[1] + GRAF_FRANJA_TITULO) + " " + vb[2] + " " + (vb[3] - GRAF_FRANJA_TITULO));
+
   var tarjeta = document.createElement("div");
   tarjeta.className = "graf-tarjeta";
   tarjeta.setAttribute("data-tipo", tipo);
   tarjeta.setAttribute("data-titulo", titulo);
+  tarjeta.appendChild(crearEncabezadoGrafico(svg, tipo, titulo, idBase));
 
   var cuerpo = document.createElement("div");
   cuerpo.className = "graf-cuerpo";
@@ -719,6 +736,227 @@ function crearLeyenda(svg, series) {
   });
   leyenda.appendChild(lista);
   return leyenda;
+}
+
+// =============================================================================
+// ENCABEZADO Y DESCARGA (SVG / PNG)
+// =============================================================================
+
+// Aviso al usuario con el toast del equipo (P6) o, si aún no existe, por consola
+function avisarGrafico(mensaje, tipo) {
+  if (typeof window.mostrarToast === "function") {
+    window.mostrarToast(mensaje, tipo);
+  } else {
+    console.info(mensaje);
+  }
+}
+
+// Icono SVG pequeño en línea (decorativo)
+function iconoSvg(ruta) {
+  var icono = svgElemento("svg", { viewBox: "0 0 24 24", width: 16, height: 16, "aria-hidden": "true", focusable: "false", "class": "graf-icono" });
+  svgElemento("path", { d: ruta }, icono);
+  return icono;
+}
+
+// Encabezado de la tarjeta: título a la izquierda y menú "Descargar gráfico" a la derecha
+function crearEncabezadoGrafico(svg, tipo, titulo, idBase) {
+  var encabezado = document.createElement("div");
+  encabezado.className = "graf-encabezado";
+
+  var h = document.createElement("h4");
+  h.className = "graf-encabezado-titulo";
+  h.textContent = titulo;
+  encabezado.appendChild(h);
+
+  var descarga = document.createElement("div");
+  descarga.className = "graf-descarga";
+
+  var boton = document.createElement("button");
+  boton.type = "button";
+  boton.className = "graf-boton";
+  boton.setAttribute("aria-haspopup", "menu");
+  boton.setAttribute("aria-expanded", "false");
+  boton.setAttribute("aria-controls", idBase + "-menu");
+  boton.appendChild(iconoSvg("M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"));
+  boton.appendChild(document.createTextNode("Descargar gráfico"));
+  boton.appendChild(iconoSvg("M6 9l6 6 6-6"));
+
+  var menu = document.createElement("ul");
+  menu.className = "graf-menu";
+  menu.id = idBase + "-menu";
+  menu.setAttribute("role", "menu");
+  menu.hidden = true;
+
+  var opciones = [["svg", "SVG", "vectorial, ideal para informes"], ["png", "PNG", "imagen en alta resolución"]];
+  var items = opciones.map(function (op) {
+    var li = document.createElement("li");
+    li.setAttribute("role", "none");
+    var item = document.createElement("button");
+    item.type = "button";
+    item.className = "graf-menu-item";
+    item.setAttribute("role", "menuitem");
+    item.setAttribute("tabindex", "-1");
+    var nombre = document.createElement("strong");
+    nombre.textContent = op[1];
+    var detalle = document.createElement("span");
+    detalle.textContent = op[2];
+    item.appendChild(nombre);
+    item.appendChild(detalle);
+    item.addEventListener("click", function () {
+      cerrar(true);
+      descargarGrafico(svg, tipo, op[0]);
+    });
+    li.appendChild(item);
+    menu.appendChild(li);
+    return item;
+  });
+
+  var abrir = function (indice) {
+    menu.hidden = false;
+    boton.setAttribute("aria-expanded", "true");
+    items[indice || 0].focus();
+    document.addEventListener("mousedown", alClicFuera);
+  };
+  var cerrar = function (devolverFoco) {
+    menu.hidden = true;
+    boton.setAttribute("aria-expanded", "false");
+    document.removeEventListener("mousedown", alClicFuera);
+    if (devolverFoco) boton.focus();
+  };
+  var alClicFuera = function (evento) {
+    if (!descarga.contains(evento.target)) cerrar(false);
+  };
+
+  boton.addEventListener("click", function () {
+    if (menu.hidden) abrir(0); else cerrar(false);
+  });
+  boton.addEventListener("keydown", function (evento) {
+    if (evento.key === "ArrowDown" || evento.key === "ArrowUp") {
+      evento.preventDefault();
+      abrir(evento.key === "ArrowUp" ? items.length - 1 : 0);
+    }
+  });
+  menu.addEventListener("keydown", function (evento) {
+    var actual = items.indexOf(document.activeElement);
+    if (evento.key === "ArrowDown" || evento.key === "ArrowUp") {
+      evento.preventDefault();
+      var paso = evento.key === "ArrowDown" ? 1 : -1;
+      items[(actual + paso + items.length) % items.length].focus();
+    } else if (evento.key === "Home" || evento.key === "End") {
+      evento.preventDefault();
+      items[evento.key === "Home" ? 0 : items.length - 1].focus();
+    } else if (evento.key === "Escape") {
+      evento.preventDefault();
+      cerrar(true);
+    } else if (evento.key === "Tab") {
+      cerrar(false);
+    }
+  });
+
+  descarga.appendChild(boton);
+  descarga.appendChild(menu);
+  encabezado.appendChild(descarga);
+  return encabezado;
+}
+
+// Copia del SVG lista para guardar: viewBox completo (con título), tamaño fijo,
+// fondo blanco y los estilos calculados escritos en cada elemento (colores reales)
+function prepararSvgParaExportar(svg) {
+  // Quitar el resaltado para que el archivo muestre el gráfico en reposo
+  var lienzo = svg.parentNode;
+  var tooltip = lienzo ? lienzo.querySelector(".graf-tooltip") : null;
+  if (tooltip) activarElemento(svg, tooltip, null);
+
+  var copia = svg.cloneNode(true);
+  var originales = [svg].concat(Array.prototype.slice.call(svg.querySelectorAll("*")));
+  var copias = [copia].concat(Array.prototype.slice.call(copia.querySelectorAll("*")));
+  for (var i = 0; i < originales.length; i++) {
+    var calculado = getComputedStyle(originales[i]);
+    var estilo = "";
+    for (var k = 0; k < GRAF_ESTILOS_EXPORTAR.length; k++) {
+      var valor = calculado.getPropertyValue(GRAF_ESTILOS_EXPORTAR[k]);
+      if (valor) estilo += GRAF_ESTILOS_EXPORTAR[k] + ":" + valor + ";";
+    }
+    copias[i].setAttribute("style", estilo);
+    copias[i].removeAttribute("class");
+    copias[i].removeAttribute("data-tooltip");
+  }
+
+  var vb = svg.getAttribute("data-viewbox-completo").split(" ").map(Number);
+  copia.setAttribute("xmlns", SVG_NS);
+  copia.setAttribute("viewBox", vb.join(" "));
+  copia.setAttribute("width", vb[2]);
+  copia.setAttribute("height", vb[3]);
+  ["tabindex", "data-viewbox-completo", "aria-describedby"].forEach(function (a) { copia.removeAttribute(a); });
+
+  var fondo = svgElemento("rect", {
+    x: vb[0], y: vb[1], width: vb[2], height: vb[3],
+    fill: colorVariable("--color-superficie", "#ffffff")
+  });
+  copia.insertBefore(fondo, copia.firstChild);
+  return { svg: copia, ancho: vb[2], alto: vb[3] };
+}
+
+// Nombre de archivo con el tipo y la fecha local, ej. "dispersion_2026-10-30.png"
+function nombreArchivoGrafico(tipo, extension) {
+  var hoy = new Date();
+  var dos = function (n) { return (n < 10 ? "0" : "") + n; };
+  return tipo + "_" + hoy.getFullYear() + "-" + dos(hoy.getMonth() + 1) + "-" + dos(hoy.getDate()) + "." + extension;
+}
+
+// Dispara la descarga de un Blob con el nombre indicado
+function guardarArchivo(blob, nombre) {
+  var url = URL.createObjectURL(blob);
+  var enlace = document.createElement("a");
+  enlace.href = url;
+  enlace.download = nombre;
+  document.body.appendChild(enlace);
+  enlace.click();
+  document.body.removeChild(enlace);
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+}
+
+// Descarga el gráfico como "svg" o "png" (PNG a 2x con fondo blanco)
+function descargarGrafico(svg, tipo, formato) {
+  var fallo = function (error) {
+    if (error) console.error(error);
+    avisarGrafico("No se pudo descargar el gráfico", "error");
+  };
+  try {
+    var exportado = prepararSvgParaExportar(svg);
+    var texto = '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(exportado.svg);
+
+    if (formato === "svg") {
+      guardarArchivo(new Blob([texto], { type: "image/svg+xml;charset=utf-8" }), nombreArchivoGrafico(tipo, "svg"));
+      avisarGrafico("Gráfico descargado", "exito");
+      return;
+    }
+
+    var escala = 2;
+    var imagen = new Image();
+    imagen.onload = function () {
+      try {
+        var lienzo = document.createElement("canvas");
+        lienzo.width = exportado.ancho * escala;
+        lienzo.height = exportado.alto * escala;
+        var ctx = lienzo.getContext("2d");
+        ctx.fillStyle = colorVariable("--color-superficie", "#ffffff");
+        ctx.fillRect(0, 0, lienzo.width, lienzo.height);
+        ctx.drawImage(imagen, 0, 0, lienzo.width, lienzo.height);
+        lienzo.toBlob(function (blob) {
+          if (!blob) { fallo(); return; }
+          guardarArchivo(blob, nombreArchivoGrafico(tipo, "png"));
+          avisarGrafico("Gráfico descargado", "exito");
+        }, "image/png");
+      } catch (error) {
+        fallo(error);
+      }
+    };
+    imagen.onerror = function () { fallo(); };
+    imagen.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(texto);
+  } catch (error) {
+    fallo(error);
+  }
 }
 
 // =============================================================================
