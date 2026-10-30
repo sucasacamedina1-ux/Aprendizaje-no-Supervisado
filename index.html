@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Estadística Web</title>
+  <title>UNSA-Stat · Análisis estadístico</title>
 
   <!-- ==========================================================================
        [PERSONA 1] - ARQUITECTURA VISUAL Y SISTEMA DE DISEÑO BASE
@@ -37,10 +37,24 @@
        - Estilizar título, subtítulo y la píldora/badge de "Hoja activa".
        - NOTA IMPORTANTE: MANTENER el id="hoja-activa" intacto.
        ========================================================================== -->
-  <header>
-    <h1>Estadística Web</h1>
-    <p>Plataforma de análisis estadístico</p>
-    <p>Hoja activa: <span id="hoja-activa">Datos1</span></p>
+  <header class="app-header">
+    <div class="app-header-contenido">
+      <div class="app-marca">
+        <span class="app-logo" aria-hidden="true">
+          <svg viewBox="0 0 32 32" focusable="false">
+            <rect x="5" y="17" width="5" height="9" rx="1.5"/>
+            <rect x="13.5" y="11" width="5" height="15" rx="1.5"/>
+            <rect x="22" y="6" width="5" height="20" rx="1.5"/>
+            <path d="M5 12.5L13 8l6 3 8-6"/>
+          </svg>
+        </span>
+        <div class="app-marca-texto">
+          <h1 class="app-titulo">UNSA-Stat</h1>
+          <p class="app-subtitulo">Plataforma de análisis estadístico</p>
+        </div>
+      </div>
+      <p class="app-hoja"><span class="app-hoja-punto" aria-hidden="true"></span>Hoja activa: <span id="hoja-activa">Datos1</span></p>
+    </div>
   </header>
 
   <!-- ==========================================================================
@@ -49,19 +63,36 @@
        - Añadir estilos de estado activo/hover y transiciones suaves.
        - NOTA IMPORTANTE: MANTENER los atributos data-seccion="..." exactamente igual.
        ========================================================================== -->
-  <nav>
-    <button data-seccion="datos">Datos</button>
-    <button data-seccion="estadistica">Estadística</button>
-    <button data-seccion="aprendizaje">Aprendizaje no supervisado</button>
-    <button data-seccion="graficos">Gráficos</button>
-    <button data-seccion="resultados">Resultados</button>
+  <nav class="nav-barra" aria-label="Secciones de la aplicación">
+    <div class="nav-pestanas" role="tablist">
+      <button type="button" class="nav-pestana" role="tab" id="nav-tab-datos" data-seccion="datos" aria-controls="seccion-datos">
+        <svg class="nav-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg>
+        <span>Datos</span>
+      </button>
+      <button type="button" class="nav-pestana" role="tab" id="nav-tab-estadistica" data-seccion="estadistica" aria-controls="seccion-estadistica">
+        <svg class="nav-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        <span>Estadística</span>
+      </button>
+      <button type="button" class="nav-pestana" role="tab" id="nav-tab-aprendizaje" data-seccion="aprendizaje" aria-controls="seccion-aprendizaje">
+        <svg class="nav-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="6" cy="7" r="2.5"/><circle cx="17" cy="6" r="2.5"/><circle cx="12" cy="17" r="2.5"/><path d="M8.2 8.3l2.6 6.4M14.8 7.7l-1.9 7M8.5 7l6-.8"/></svg>
+        <span>Aprendizaje no supervisado</span>
+      </button>
+      <button type="button" class="nav-pestana" role="tab" id="nav-tab-graficos" data-seccion="graficos" aria-controls="seccion-graficos">
+        <svg class="nav-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+        <span>Gráficos</span>
+      </button>
+      <button type="button" class="nav-pestana" role="tab" id="nav-tab-resultados" data-seccion="resultados" aria-controls="seccion-resultados">
+        <svg class="nav-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+        <span>Resultados</span>
+      </button>
+    </div>
   </nav>
 
   <!-- ==========================================================================
        [PERSONA 1] - CONTENEDOR PRINCIPAL
        - Definir max-width, espaciados y estructura responsiva del <main>.
        ========================================================================== -->
-  <main>
+  <main class="app-main">
 
     <!-- ========================================================================
          [PERSONA 2] - HOJA DE CÁLCULO Y GESTIÓN DE DATOS (DATA GRID)
@@ -342,6 +373,13 @@
 
   </main>
 
+  <!-- [PERSONA 1] Barra de estado: resumen de la hoja y sección actual -->
+  <footer class="app-estado">
+    <span class="app-estado-item"><span class="app-estado-punto" aria-hidden="true"></span>Listo</span>
+    <span class="app-estado-item" id="app-estado-datos"></span>
+    <span class="app-estado-item" id="app-estado-seccion"></span>
+  </footer>
+
   <!-- ==========================================================================
        SCRIPTS DE LA APLICACIÓN
        (No modificar rutas ni orden de carga para garantizar el correcto funcionamiento)
@@ -362,5 +400,7 @@
   <script src="js/graficos/graficos.js"></script>
   <script src="js/resultados/resultados.js"></script>
   <script src="js/principal.js"></script>
+  <!-- P1: pestañas accesibles y barra de estado (se carga al final, no altera el orden anterior) -->
+  <script src="js/base/navegacion.js"></script>
 </body>
 </html>
