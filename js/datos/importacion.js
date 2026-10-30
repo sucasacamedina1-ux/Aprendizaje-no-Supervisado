@@ -1,5 +1,22 @@
 // Importación de archivos CSV y pegado desde Excel
 
+// Aviso al usuario con mostrarToast (P6) o, si esa rama aún no está, por consola
+function avisarDatos(mensaje, tipo) {
+  if (typeof window.mostrarToast === "function") window.mostrarToast(mensaje, tipo);
+  else console.info(mensaje);
+}
+
+// Texto "N filas, M columnas" para los avisos
+function resumenHoja() {
+  return datos.filas + (datos.filas === 1 ? " fila" : " filas") + ", " +
+    datos.columnas.length + (datos.columnas.length === 1 ? " columna" : " columnas");
+}
+
+// Tras cargar datos nuevos, los selectores de variables deben reflejarlos
+function refrescarSelectores() {
+  if (typeof actualizarSelectoresVariables === "function") actualizarSelectoresVariables();
+}
+
 // Lee un archivo CSV y reemplaza los datos
 function importarCSV(archivo) {
   var lector = new FileReader();
@@ -10,7 +27,7 @@ function importarCSV(archivo) {
   };
 
   lector.onerror = function () {
-    alert("No se pudo leer el archivo.");
+    avisarDatos("No se pudo leer el archivo CSV.", "error");
   };
 
   lector.readAsText(archivo);
@@ -35,7 +52,7 @@ function procesarCSV(texto) {
   }
 
   if (filas.length === 0) {
-    alert("El archivo está vacío.");
+    avisarDatos("El archivo CSV está vacío.", "error");
     return;
   }
 
@@ -103,7 +120,9 @@ function procesarCSV(texto) {
 
   reemplazarDatos(nuevasColumnas);
   actualizarTiposColumnas();
-  alert("CSV importado: " + datos.filas + " filas, " + datos.columnas.length + " columnas.");
+  // La lectura es asíncrona: se refrescan aquí los selectores (antes quedaban con los datos viejos)
+  refrescarSelectores();
+  avisarDatos("Datos importados con éxito (" + resumenHoja() + ")", "exito");
 }
 
 // Pegado desde Excel (tabulaciones y saltos de línea)
@@ -118,7 +137,7 @@ function pegarDesdeTexto(texto) {
   }
 
   if (filas.length === 0) {
-    alert("No hay datos para pegar.");
+    avisarDatos("No hay datos para pegar.", "error");
     return;
   }
 
@@ -154,5 +173,5 @@ function pegarDesdeTexto(texto) {
 
   reemplazarDatos(nuevasColumnas);
   actualizarTiposColumnas();
-  alert("Datos pegados: " + datos.filas + " filas, " + datos.columnas.length + " columnas.");
+  avisarDatos("Datos pegados con éxito (" + resumenHoja() + ")", "exito");
 }
