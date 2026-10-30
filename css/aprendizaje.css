@@ -1,457 +1,342 @@
-/* ==========================================================================
-   P4 · Karina — Panel de clustering (prefijo .apr-)
-   Usa las variables de css/variables.css con valores de respaldo.
-   ========================================================================== */
-
-#seccion-aprendizaje .apr-intro {
-  max-width: 75ch;
-  margin: 0 0 16px;
-  color: var(--color-texto-suave, #64748b);
-  font-size: 14px;
-  line-height: 1.5;
+#seccion-aprendizaje {
+  --apr-primario: var(--color-primario, #0f766e);
+  --apr-texto: var(--color-texto, #1e293b);
+  --apr-texto-suave: var(--color-texto-secundario, #64748b);
+  --apr-borde: var(--color-borde, #dbe5e7);
+  --apr-fondo: var(--color-fondo-suave, #f0fdfa);
+  --apr-superficie: var(--color-superficie, #ffffff);
+  --apr-radio: var(--border-radius, 10px);
+  --apr-sombra: var(--sombra-suave, 0 8px 24px rgb(15 23 42 / 7%));
+  color: var(--apr-texto);
 }
 
-/* --- Panel en 2 columnas (1 en tablet) --- */
-.apr-panel {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+#seccion-aprendizaje[style*="display: block"] {
+  display: grid !important;
+  grid-template-columns: minmax(0, 0.9fr) minmax(260px, 1.1fr);
+  grid-template-areas:
+    "titulo titulo"
+    "config config"
+    "variables k"
+    "variables iteraciones"
+    "variables estandarizar"
+    "variables distancia"
+    "variables minkowski"
+    "algoritmos algoritmos"
+    "kmeans kmedoids"
+    "nota nota";
   align-items: stretch;
-  margin-bottom: 16px;
+  gap: 14px 18px;
+  max-width: 100%;
+  padding: clamp(18px, 3vw, 30px);
+  border: 1px solid var(--apr-borde);
+  border-radius: var(--apr-radio);
+  background: var(--apr-superficie);
+  box-shadow: var(--apr-sombra);
 }
 
-.apr-bloque {
-  padding: 18px;
-  background: var(--color-superficie, #ffffff);
-  border: 1px solid var(--color-borde, #e2e8f0);
-  border-radius: var(--radio, 8px);
-  box-shadow: var(--sombra-sm, 0 1px 2px rgba(15, 23, 42, 0.06));
-}
-
-#seccion-aprendizaje .apr-bloque-titulo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 14px;
-  color: var(--color-texto, #1e293b);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.apr-paso {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--color-fondo, #f0fdfa);
-  color: var(--color-primario, #0f766e);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-/* --- Campos --- */
-.apr-campos {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-#seccion-aprendizaje .apr-campo {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-  margin: 0;
-}
-
-#seccion-aprendizaje .apr-campo[hidden] {
+#seccion-aprendizaje > br {
   display: none;
 }
 
-.apr-etiqueta-fila {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-#seccion-aprendizaje .apr-etiqueta {
+#seccion-aprendizaje > h2 {
+  grid-area: titulo;
   margin: 0;
-  color: var(--color-texto, #1e293b);
-  font-size: 13px;
-  font-weight: 500;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--apr-borde);
+  color: var(--apr-texto);
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  line-height: 1.3;
 }
 
-.apr-texto-ayuda {
-  color: var(--color-texto-suave, #64748b);
-  font-size: 12px;
-  line-height: 1.4;
+#seccion-aprendizaje > h3:first-of-type {
+  grid-area: config;
+  margin: 0;
+  color: var(--apr-primario);
+  font-size: 1rem;
+  font-weight: 700;
 }
 
-#seccion-aprendizaje select,
-#seccion-aprendizaje input[type="number"] {
+#seccion-aprendizaje > label:has(#select-vars-cluster) {
+  grid-area: variables;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--apr-borde);
+  border-radius: var(--apr-radio);
+  background: var(--apr-fondo);
+  font-weight: 600;
+}
+
+#seccion-aprendizaje #select-vars-cluster {
   width: 100%;
-  margin: 0;
-  padding: 9px 12px;
-  background: var(--color-superficie, #ffffff);
-  border: 1px solid var(--color-borde, #e2e8f0);
-  border-radius: var(--radio, 8px);
-  color: var(--color-texto, #1e293b);
-  font-family: var(--fuente, 'Inter', sans-serif);
-  font-size: 14px;
-  transition: border-color 150ms ease;
-}
-
-#seccion-aprendizaje select:focus-visible,
-#seccion-aprendizaje input[type="number"]:focus-visible {
-  outline: 2px solid var(--color-primario, #0f766e);
-  outline-offset: 1px;
-  border-color: var(--color-primario, #0f766e);
-}
-
-.apr-select {
-  position: relative;
-  display: block;
-}
-
-.apr-select::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: 14px;
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid var(--color-texto-suave, #64748b);
-  border-bottom: 2px solid var(--color-texto-suave, #64748b);
-  transform: translateY(-70%) rotate(45deg);
-  pointer-events: none;
-}
-
-.apr-select select {
-  padding-right: 36px;
-  appearance: none;
-  -webkit-appearance: none;
-  cursor: pointer;
-}
-
-#seccion-aprendizaje .apr-multiple {
+  min-height: 188px;
   padding: 6px;
+  border: 1px solid var(--apr-borde);
+  border-radius: 7px;
+  background: var(--apr-superficie);
+  color: var(--apr-texto);
+  font: inherit;
 }
 
-.apr-multiple option {
-  padding: 6px 10px;
-  border-radius: 6px;
+#seccion-aprendizaje #select-vars-cluster option {
+  padding: 8px 10px;
+  border-radius: 4px;
 }
 
-.apr-multiple option:checked,
-.apr-multiple:focus option:checked {
-  background: var(--color-primario, #0f766e) linear-gradient(var(--color-primario, #0f766e), var(--color-primario, #0f766e));
-  color: var(--color-superficie, #ffffff);
+#seccion-aprendizaje #select-vars-cluster option:checked {
+  background: var(--apr-primario);
+  color: #fff;
 }
 
-/* --- Toggle switch (sigue siendo un checkbox con role="switch") --- */
-#seccion-aprendizaje .apr-switch {
-  position: relative;
+#seccion-aprendizaje > label:has(#input-k) {
+  grid-area: k;
+}
+
+#seccion-aprendizaje > label:has(#input-max-iter) {
+  grid-area: iteraciones;
+}
+
+#seccion-aprendizaje > label:has(#check-estandarizar) {
+  grid-area: estandarizar;
   display: flex;
-  align-items: flex-start;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  align-items: center;
   gap: 12px;
-  margin: 16px 0 0;
-  padding: 12px;
-  border: 1px solid var(--color-borde, #e2e8f0);
-  border-radius: var(--radio, 8px);
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid var(--apr-borde);
+  border-radius: var(--apr-radio);
+  background: var(--apr-fondo);
   cursor: pointer;
+  font-weight: 600;
 }
 
-.apr-switch-input {
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
-  margin: 0;
+#seccion-aprendizaje > label:has(#select-distancia) {
+  grid-area: distancia;
 }
 
-.apr-switch-pista {
+#seccion-aprendizaje > label:has(#input-q-minkowski) {
+  grid-area: minkowski;
+}
+
+#seccion-aprendizaje > label:has(#input-k),
+#seccion-aprendizaje > label:has(#input-max-iter),
+#seccion-aprendizaje > label:has(#select-distancia),
+#seccion-aprendizaje > label:has(#input-q-minkowski) {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--apr-borde);
+  border-radius: var(--apr-radio);
+  background: var(--apr-superficie);
+  font-weight: 600;
+}
+
+#seccion-aprendizaje input[type="number"],
+#seccion-aprendizaje select:not([multiple]) {
+  width: 100% !important;
+  min-height: 40px;
+  padding: 8px 11px;
+  border: 1px solid var(--apr-borde);
+  border-radius: 7px;
+  background-color: var(--apr-superficie);
+  color: var(--apr-texto);
+  font: inherit;
+  font-weight: 400;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+#seccion-aprendizaje input[type="number"]:focus,
+#seccion-aprendizaje select:focus {
+  border-color: var(--apr-primario);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--apr-primario) 16%, transparent);
+}
+
+#seccion-aprendizaje #check-estandarizar {
   position: relative;
-  flex: 0 0 auto;
-  width: 40px;
-  height: 22px;
-  margin-top: 1px;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 24px;
+  margin: 0;
+  appearance: none;
+  border: 1px solid var(--apr-borde);
   border-radius: 999px;
-  background: var(--color-borde, #e2e8f0);
-  transition: background-color 180ms ease;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
 }
 
-.apr-switch-perilla {
+#seccion-aprendizaje #check-estandarizar::before {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 16px;
-  height: 16px;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: var(--color-superficie, #ffffff);
-  box-shadow: var(--sombra-sm, 0 1px 2px rgba(15, 23, 42, 0.2));
-  transition: transform 180ms ease;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 25%);
+  content: "";
+  transition: transform 160ms ease;
 }
 
-.apr-switch-input:checked + .apr-switch-pista {
-  background: var(--color-primario, #0f766e);
+#seccion-aprendizaje #check-estandarizar:checked {
+  border-color: var(--apr-primario);
+  background: var(--apr-primario);
 }
 
-.apr-switch-input:checked + .apr-switch-pista .apr-switch-perilla {
+#seccion-aprendizaje #check-estandarizar:checked::before {
   transform: translateX(18px);
 }
 
-.apr-switch-input:focus-visible + .apr-switch-pista {
-  outline: 2px solid var(--color-primario, #0f766e);
+#seccion-aprendizaje #check-estandarizar:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--apr-primario) 28%, transparent);
   outline-offset: 2px;
 }
 
-.apr-switch-texto {
+#seccion-aprendizaje > label:has(#input-q-minkowski)::after {
+  color: var(--apr-texto-suave);
+  content: "q controla el peso de las diferencias entre variables; q = 2 equivale a la distancia euclidiana.";
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+#seccion-aprendizaje > h3:nth-of-type(2) {
+  grid-area: algoritmos;
+  margin: 8px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--apr-borde);
+  color: var(--apr-primario);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+#seccion-aprendizaje > #btn-kmeans {
+  grid-area: kmeans;
+}
+
+#seccion-aprendizaje > #btn-kmedoids {
+  grid-area: kmedoids;
+}
+
+#seccion-aprendizaje > #btn-kmeans,
+#seccion-aprendizaje > #btn-kmedoids {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: flex-start;
+  gap: 7px;
+  min-height: 104px;
+  margin: 0;
+  padding: 17px 18px;
+  border: 1px solid color-mix(in srgb, var(--apr-primario) 25%, var(--apr-borde));
+  border-radius: var(--apr-radio);
+  background: var(--apr-superficie);
+  box-shadow: 0 3px 10px rgb(15 23 42 / 5%);
+  color: var(--apr-primario);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
 
-/* --- Tooltips de ayuda (hover y foco con teclado; Escape los oculta) --- */
-.apr-ayuda {
-  position: relative;
-  display: inline-flex;
+#seccion-aprendizaje > #btn-kmeans::after {
+  color: var(--apr-texto-suave);
+  content: "Centrado en medias";
+  font-size: 0.82rem;
+  font-weight: 400;
 }
 
-#seccion-aprendizaje .apr-ayuda-boton {
-  display: grid;
-  place-items: center;
+#seccion-aprendizaje > #btn-kmedoids::after {
+  color: var(--apr-texto-suave);
+  content: "Centrado en puntos reales, robusto a atípicos";
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+
+#seccion-aprendizaje > #btn-kmeans:hover,
+#seccion-aprendizaje > #btn-kmedoids:hover {
+  transform: translateY(-2px);
+  border-color: var(--apr-primario);
+  background: var(--apr-fondo);
+  box-shadow: 0 8px 18px rgb(15 23 42 / 9%);
+}
+
+#seccion-aprendizaje > #btn-kmeans:focus-visible,
+#seccion-aprendizaje > #btn-kmedoids:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--apr-primario) 30%, transparent);
+  outline-offset: 2px;
+}
+
+#seccion-aprendizaje > #btn-kmeans:disabled,
+#seccion-aprendizaje > #btn-kmedoids:disabled,
+#seccion-aprendizaje > #btn-kmeans.apr-cargando,
+#seccion-aprendizaje > #btn-kmedoids.apr-cargando {
+  cursor: wait;
+  opacity: 0.8;
+}
+
+#seccion-aprendizaje > #btn-kmeans.apr-cargando::before,
+#seccion-aprendizaje > #btn-kmedoids.apr-cargando::before {
   width: 18px;
   height: 18px;
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--color-texto-suave, #64748b);
+  border: 2px solid color-mix(in srgb, var(--apr-primario) 25%, transparent);
+  border-top-color: var(--apr-primario);
   border-radius: 50%;
-  background: var(--color-superficie, #ffffff);
-  color: var(--color-texto-suave, #64748b);
-  font-family: Georgia, serif;
-  font-size: 11px;
-  font-style: italic;
-  font-weight: 700;
-  line-height: 1;
-  cursor: help;
-}
-
-#seccion-aprendizaje .apr-ayuda-boton:focus-visible {
-  outline: 2px solid var(--color-primario, #0f766e);
-  outline-offset: 2px;
-}
-
-.apr-ayuda-texto {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  z-index: 15;
-  width: max-content;
-  max-width: 240px;
-  padding: 8px 10px;
-  border-radius: var(--radio, 8px);
-  background: var(--color-texto, #1e293b);
-  color: var(--color-superficie, #ffffff);
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1.4;
-  box-shadow: var(--sombra-md, 0 4px 12px rgba(15, 23, 42, 0.10));
-  transform: translateX(-50%);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 150ms ease, visibility 150ms ease;
-}
-
-.apr-ayuda:hover .apr-ayuda-texto,
-.apr-ayuda:focus-within .apr-ayuda-texto {
-  opacity: 1;
-  visibility: visible;
-}
-
-.apr-ayuda.apr-ayuda--oculta .apr-ayuda-texto {
-  opacity: 0;
-  visibility: hidden;
-}
-
-/* --- Tarjetas de algoritmo (role="radio") --- */
-.apr-algoritmos {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.apr-algoritmo {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 14px 44px 14px 16px;
-  border: 2px solid var(--color-borde, #e2e8f0);
-  border-radius: var(--radio, 8px);
-  background: var(--color-superficie, #ffffff);
-  cursor: pointer;
-  transition: border-color 180ms ease, background-color 180ms ease;
-}
-
-.apr-algoritmo:hover {
-  border-color: var(--color-secundario, #14b8a6);
-}
-
-.apr-algoritmo:focus-visible {
-  outline: 2px solid var(--color-primario, #0f766e);
-  outline-offset: 2px;
-}
-
-.apr-algoritmo[aria-checked="true"] {
-  border-color: var(--color-primario, #0f766e);
-  background: var(--color-fondo, #f0fdfa);
-}
-
-.apr-algoritmo-nombre {
-  color: var(--color-texto, #1e293b);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.apr-algoritmo-desc {
-  color: var(--color-texto-suave, #64748b);
-  font-size: 13px;
-}
-
-/* Check de seleccionado: círculo vacío o lleno con ✓ */
-.apr-algoritmo-check {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--color-borde, #e2e8f0);
-  border-radius: 50%;
-}
-
-.apr-algoritmo-check svg {
-  display: block;
-  width: 12px;
-  height: 12px;
-  margin: 0;
-  fill: none;
-  stroke: var(--color-superficie, #ffffff);
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0;
-}
-
-.apr-algoritmo[aria-checked="true"] .apr-algoritmo-check {
-  border-color: var(--color-primario, #0f766e);
-  background: var(--color-primario, #0f766e);
-}
-
-.apr-algoritmo[aria-checked="true"] .apr-algoritmo-check svg {
-  opacity: 1;
-}
-
-/* --- Ejecutar y estado de carga --- */
-.apr-ejecutar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-#seccion-aprendizaje .apr-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  padding: 10px 20px;
-  border: 1px solid var(--color-primario, #0f766e);
-  border-radius: var(--radio, 8px);
-  background: var(--color-primario, #0f766e);
-  color: var(--color-superficie, #ffffff);
-  font-family: var(--fuente, 'Inter', sans-serif);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 150ms ease;
-}
-
-#seccion-aprendizaje .apr-btn:hover:not(:disabled) {
-  background: var(--color-primario-oscuro, #115e59);
-}
-
-#seccion-aprendizaje .apr-btn:focus-visible {
-  outline: 2px solid var(--color-primario, #0f766e);
-  outline-offset: 2px;
-}
-
-#seccion-aprendizaje .apr-btn[hidden] {
-  display: none;
-}
-
-#seccion-aprendizaje .apr-btn:disabled {
-  opacity: 0.75;
-  cursor: progress;
-}
-
-/* Spinner sutil dentro del botón mientras corren las iteraciones */
-.apr-btn.apr-cargando::before {
+  animation: apr-giro 700ms linear infinite;
   content: "";
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: var(--color-superficie, #ffffff);
-  border-radius: 50%;
-  animation: apr-girar 700ms linear infinite;
 }
 
-@keyframes apr-girar {
-  to { transform: rotate(360deg); }
+#seccion-aprendizaje > p {
+  grid-area: nota;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: var(--apr-fondo);
+  color: var(--apr-texto-suave);
+  line-height: 1.5;
 }
 
-.apr-estado {
-  color: var(--color-texto-suave, #64748b);
-  font-size: 13px;
-}
-
-#seccion-aprendizaje .apr-nota {
-  margin: 16px 0 0;
-  color: var(--color-texto-suave, #64748b);
-  font-size: 12px;
-}
-
-/* --- Tablet --- */
-@media (max-width: 900px) {
-  .apr-panel {
-    grid-template-columns: minmax(0, 1fr);
+@keyframes apr-giro {
+  to {
+    transform: rotate(360deg);
   }
 }
 
-@media (max-width: 560px) {
-  .apr-campos,
-  .apr-algoritmos {
+@media (max-width: 700px) {
+  #seccion-aprendizaje[style*="display: block"] {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "titulo"
+      "config"
+      "variables"
+      "k"
+      "iteraciones"
+      "estandarizar"
+      "distancia"
+      "minkowski"
+      "algoritmos"
+      "kmeans"
+      "kmedoids"
+      "nota";
+    gap: 12px;
+    padding: 16px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .apr-switch-pista,
-  .apr-switch-perilla,
-  .apr-ayuda-texto,
-  .apr-algoritmo,
-  #seccion-aprendizaje .apr-btn,
-  #seccion-aprendizaje select,
-  #seccion-aprendizaje input[type="number"] {
-    transition: none;
-  }
-
-  /* Sin giro: el texto "Calculando…" indica el estado */
-  .apr-btn.apr-cargando::before {
-    animation: none;
+  #seccion-aprendizaje *,
+  #seccion-aprendizaje *::before,
+  #seccion-aprendizaje *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
