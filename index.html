@@ -17,6 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/estilos.css">
+  <link rel="stylesheet" href="css/resultados.css"> <!-- P6 · Viviana -->
   <!-- Sugerencia: Modularizar CSS para que cada persona trabaje en su archivo:
   <link rel="stylesheet" href="css/base.css">         <-- Persona 1
   <link rel="stylesheet" href="css/tabla.css">        <-- Persona 2
@@ -333,7 +334,17 @@
     <section id="seccion-resultados" style="display:none">
       <h2>Resultados</h2>
       <div id="panel-resultados">
-        <p>Aquí se mostrarán los resultados de los análisis.</p>
+        <div class="res-vacio">
+          <svg class="res-vacio-ilustracion" viewBox="0 0 120 96" aria-hidden="true" focusable="false">
+            <rect class="res-vacio-hoja" x="22" y="8" width="76" height="80" rx="8"/>
+            <path class="res-vacio-linea" d="M34 26h40M34 36h28"/>
+            <rect class="res-vacio-barra" x="36" y="58" width="10" height="18" rx="2"/>
+            <rect class="res-vacio-barra" x="52" y="50" width="10" height="26" rx="2"/>
+            <rect class="res-vacio-barra res-vacio-barra--acento" x="68" y="42" width="10" height="34" rx="2"/>
+          </svg>
+          <p class="res-vacio-titulo">Ejecuta un análisis o gráfico para ver el reporte aquí</p>
+          <p class="res-vacio-texto">Elige un análisis en Estadística, Aprendizaje no supervisado o Gráficos.</p>
+        </div>
       </div>
     </section>
 
