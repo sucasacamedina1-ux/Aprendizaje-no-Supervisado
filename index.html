@@ -17,6 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/estilos.css">
+  <link rel="stylesheet" href="css/tabla.css"> <!-- P2 · Clyde -->
   <!-- Sugerencia: Modularizar CSS para que cada persona trabaje en su archivo:
   <link rel="stylesheet" href="css/base.css">         <-- Persona 1
   <link rel="stylesheet" href="css/tabla.css">        <-- Persona 2
@@ -72,17 +73,31 @@
          ======================================================================== -->
     <section id="seccion-datos">
       <h2>Datos</h2>
-      <p style="font-size:12px; color:#555;">
-        Haz clic en una celda para editarla. Puedes pegar datos copiados desde Excel (Ctrl+V) sobre la tabla.
-      </p>
-      <div id="contenedor-tabla" tabindex="0"></div>
-      <div class="botones-tabla">
-        <button id="btn-agregar-fila">Agregar fila</button>
-        <button id="btn-agregar-columna">Agregar columna</button>
-        <button id="btn-importar">Importar CSV</button>
-        <button id="btn-exportar">Exportar CSV</button>
-        <input type="file" id="input-archivo" accept=".csv" style="display:none">
+
+      <!-- Barra de herramientas de la hoja -->
+      <div class="botones-tabla tabla-toolbar" role="toolbar" aria-label="Acciones de la hoja de datos">
+        <button type="button" id="btn-importar" class="tabla-btn tabla-btn--primario" aria-label="Importar archivo CSV">
+          <svg class="tabla-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 15V3m0 0L7 8m5-5l5 5M5 21h14"/></svg><span>Importar CSV</span>
+        </button>
+        <button type="button" id="btn-agregar-fila" class="tabla-btn" aria-label="Agregar una fila al final">
+          <svg class="tabla-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M12 15v6M9 18h6"/></svg><span>Agregar fila</span>
+        </button>
+        <button type="button" id="btn-agregar-columna" class="tabla-btn" aria-label="Agregar una columna al final">
+          <svg class="tabla-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3v18M12 3v18M18 9v6M15 12h6"/></svg><span>Agregar columna</span>
+        </button>
+        <button type="button" id="btn-exportar" class="tabla-btn tabla-btn--fantasma" aria-label="Exportar la hoja como CSV">
+          <svg class="tabla-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg><span>Exportar CSV</span>
+        </button>
+        <input type="file" id="input-archivo" accept=".csv" hidden>
       </div>
+
+      <!-- Ayuda como banner informativo -->
+      <p class="tabla-ayuda" role="note">
+        <svg class="tabla-icono tabla-ayuda-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 11v6M12 7.5v.5M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/></svg>
+        <span>Haz clic en una celda para editarla. Puedes pegar datos copiados desde Excel (Ctrl+V) sobre la tabla.</span>
+      </p>
+
+      <div id="contenedor-tabla" tabindex="0" role="region" aria-label="Hoja de datos"></div>
     </section>
 
     <!-- ========================================================================
