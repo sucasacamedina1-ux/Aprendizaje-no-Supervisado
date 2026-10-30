@@ -1,5 +1,99 @@
 // Presentación de resultados en el panel
 
+// =============================================================================
+// NOTIFICACIONES (toasts) — P6
+// Uso desde cualquier parte:
+//   mostrarToast("Datos importados con éxito (25 filas)", "exito");
+//   mostrarToast("Selecciona al menos 2 variables", "error");
+// Tipos: "exito", "error", "info" (por defecto) y "aviso".
+// Si una rama aún no tiene esta función: window.mostrarToast?.(mensaje, tipo)
+// =============================================================================
+
+var RES_TOAST_MAXIMO = 3;
+var RES_TOAST_DURACION = 4000;
+
+var RES_TOAST_TIPOS = {
+  exito: { titulo: "Listo", icono: "M5 12.5l4.5 4.5L19 7.5" },
+  error: { titulo: "Error", icono: "M12 7v6M12 16.5v.5M10.3 3.9L2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" },
+  info: { titulo: "Información", icono: "M12 11v6M12 7.5v.5M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" },
+  aviso: { titulo: "Atención", icono: "M12 8v5M12 16v.5M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" }
+};
+
+// Contenedor flotante de toasts (se crea una sola vez)
+function contenedorToasts() {
+  var contenedor = document.getElementById("res-toasts");
+  if (contenedor) return contenedor;
+  contenedor = document.createElement("div");
+  contenedor.id = "res-toasts";
+  contenedor.className = "res-toasts";
+  contenedor.setAttribute("aria-live", "polite");
+  contenedor.setAttribute("aria-relevant", "additions");
+  document.body.appendChild(contenedor);
+  return contenedor;
+}
+
+// Cierra un toast con animación de salida
+function cerrarToast(toast) {
+  if (!toast || toast.classList.contains("res-toast--saliendo")) return;
+  clearTimeout(toast._temporizador);
+  toast.classList.add("res-toast--saliendo");
+  var quitar = function () { if (toast.parentNode) toast.parentNode.removeChild(toast); };
+  toast.addEventListener("animationend", quitar);
+  setTimeout(quitar, 400); // por si no hay animación (movimiento reducido)
+}
+
+// Muestra un aviso flotante; se cierra solo a los 4 s (se pausa con el mouse encima)
+function mostrarToast(mensaje, tipo) {
+  if (!RES_TOAST_TIPOS[tipo]) tipo = "info";
+  var config = RES_TOAST_TIPOS[tipo];
+  var contenedor = contenedorToasts();
+
+  var toast = document.createElement("div");
+  toast.className = "res-toast res-toast--" + tipo;
+  if (tipo === "error") toast.setAttribute("role", "alert");
+
+  var icono = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  icono.setAttribute("viewBox", "0 0 24 24");
+  icono.setAttribute("aria-hidden", "true");
+  icono.setAttribute("class", "res-toast-icono");
+  var trazo = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  trazo.setAttribute("d", config.icono);
+  icono.appendChild(trazo);
+
+  var cuerpo = document.createElement("div");
+  cuerpo.className = "res-toast-cuerpo";
+  var titulo = document.createElement("strong");
+  titulo.textContent = config.titulo;
+  var texto = document.createElement("span");
+  texto.textContent = mensaje;
+  cuerpo.appendChild(titulo);
+  cuerpo.appendChild(texto);
+
+  var cerrar = document.createElement("button");
+  cerrar.type = "button";
+  cerrar.className = "res-toast-cerrar";
+  cerrar.setAttribute("aria-label", "Cerrar aviso");
+  cerrar.textContent = "×";
+  cerrar.addEventListener("click", function () { cerrarToast(toast); });
+
+  toast.appendChild(icono);
+  toast.appendChild(cuerpo);
+  toast.appendChild(cerrar);
+  contenedor.appendChild(toast);
+
+  // Máximo 3 visibles: se cierra el más antiguo
+  var visibles = contenedor.querySelectorAll(".res-toast:not(.res-toast--saliendo)");
+  for (var i = 0; i < visibles.length - RES_TOAST_MAXIMO; i++) cerrarToast(visibles[i]);
+
+  var programar = function () { toast._temporizador = setTimeout(function () { cerrarToast(toast); }, RES_TOAST_DURACION); };
+  toast.addEventListener("mouseenter", function () { clearTimeout(toast._temporizador); });
+  toast.addEventListener("mouseleave", programar);
+  programar();
+  return toast;
+}
+
+window.mostrarToast = mostrarToast;
+
 function limpiarResultados() {
   var panel = document.getElementById("panel-resultados");
   if (panel) panel.innerHTML = "";
