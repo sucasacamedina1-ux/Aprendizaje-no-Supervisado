@@ -1,6 +1,8 @@
 /* ==========================================================================
    P5 · Pilar — Gráficos SVG (prefijo .graf-)
    Usa las variables de css/variables.css con valores de respaldo.
+   Los colores de las series (barras, puntos, clusters) los pone graficos.js
+   leyendo --graf-azul, --graf-purpura, --graf-esmeralda y --graf-coral.
    ========================================================================== */
 
 /* --- Tarjeta contenedora del gráfico --- */
@@ -26,8 +28,154 @@
   margin: 0;
 }
 
+/* --- Textos --- */
 .graf-texto {
   font-family: var(--fuente, 'Inter'), Arial, sans-serif;
+  fill: var(--color-texto-suave, #64748b);
+}
+
+.graf-titulo,
+.graf-titulo-eje,
+.graf-valor-fuerte {
+  fill: var(--color-texto, #1e293b);
+}
+
+.graf-valor-fuerte {
+  font-weight: 600;
+}
+
+/* Texto con halo del color de fondo: legible encima de puntos y líneas */
+.graf-halo {
+  paint-order: stroke;
+  stroke: var(--color-superficie, #ffffff);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+/* --- Ejes y rejilla --- */
+.graf-eje {
+  stroke: var(--color-texto-suave, #64748b);
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+}
+
+.graf-rejilla-linea {
+  stroke: var(--graf-rejilla, #f1f5f9);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+/* --- Barras e histograma --- */
+.graf-barra {
+  fill-opacity: 0.82;
+  stroke-width: 1;
+}
+
+/* --- Puntos --- */
+.graf-punto {
+  fill-opacity: 0.9;
+  stroke: var(--color-superficie, #ffffff);
+  stroke-width: 1.5;
+}
+
+/* --- Recta de regresión y su etiqueta --- */
+.graf-recta {
+  stroke: var(--graf-coral, #f43f5e);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.graf-etiqueta-fondo {
+  fill: var(--color-superficie, #ffffff);
+  fill-opacity: 0.92;
+  stroke: var(--color-borde, #e2e8f0);
+  stroke-width: 1;
+}
+
+.graf-etiqueta-recta {
+  fill: var(--color-texto, #1e293b);
+  font-weight: 500;
+}
+
+/* --- Diagrama de caja --- */
+.graf-caja-rect {
+  fill-opacity: 0.16;
+  stroke-width: 1.5;
+}
+
+.graf-mediana {
+  stroke: var(--color-texto, #1e293b);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.graf-bigote {
+  stroke: var(--color-texto-suave, #64748b);
+  stroke-width: 1.25;
+}
+
+.graf-atipico {
+  fill: var(--color-superficie, #ffffff);
+  stroke: var(--graf-coral, #f43f5e);
+  stroke-width: 1.5;
+}
+
+/* --- Clusters: elipses y centroides --- */
+.graf-elipse {
+  fill-opacity: 0.07;
+  stroke-opacity: 0.6;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.graf-centroide-halo {
+  stroke: var(--color-superficie, #ffffff);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.graf-centroide-trazo {
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* --- Animación de entrada (solo si el usuario no pidió reducir movimiento) --- */
+@media (prefers-reduced-motion: no-preference) {
+  .graf-barra {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: graf-crecer 450ms ease-out both;
+    animation-delay: var(--graf-retraso, 0ms);
+  }
+
+  .graf-punto {
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    animation: graf-aparecer 300ms ease-out both;
+    animation-delay: var(--graf-retraso, 0ms);
+  }
+
+  .graf-recta,
+  .graf-etiqueta,
+  .graf-elipse,
+  .graf-centroide {
+    animation: graf-desvanecer 400ms ease-out 250ms both;
+  }
+}
+
+@keyframes graf-crecer {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes graf-aparecer {
+  from { opacity: 0; transform: scale(0.4); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes graf-desvanecer {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* --- Tablet --- */
