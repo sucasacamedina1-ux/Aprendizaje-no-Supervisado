@@ -293,9 +293,20 @@ function ejecutarPruebaPendiente() {
   mostrarSeccion("resultados");
 }
 
-function ejecutarKmeansUI() {
+// =============================================================================
+// P4 · Aprendizaje no supervisado: validación común, estado de carga y panel
+// =============================================================================
+
+// Aviso de validación: mostrarToast (P6) o, si aún no existe en esta rama, console.info
+function avisarAprendizaje(mensaje, tipo) {
+  if (typeof window.mostrarToast === "function") window.mostrarToast(mensaje, tipo || "error");
+  else console.info(mensaje);
+}
+
+// Lee y valida la configuración común de K-means y K-medoids; null si algo falla
+function leerConfiguracionClustering() {
   var cols = obtenerColumnasSeleccionadas("select-vars-cluster");
-  if (cols.length < 1) { alert("Selecciona al menos 1 variable numérica."); return; }
+  if (cols.length < 2) { avisarAprendizaje("Selecciona al menos 2 variables numéricas."); return null; }
 
   var k = Number(document.getElementById("input-k").value);
   var maxIter = Number(document.getElementById("input-max-iter").value);
@@ -303,57 +314,131 @@ function ejecutarKmeansUI() {
   var tipoDist = document.getElementById("select-distancia").value;
   var qMinkowski = Number(document.getElementById("input-q-minkowski").value) || 2;
 
-  if (isNaN(k) || k < 1) { alert("K debe ser un entero positivo."); return; }
-  if (isNaN(maxIter) || maxIter < 1) { alert("Máx. iteraciones inválido."); return; }
+  if (isNaN(k) || k < 1 || Math.floor(k) !== k) { avisarAprendizaje("K debe ser un número entero mayor o igual a 1."); return null; }
+  if (isNaN(maxIter) || maxIter < 1) { avisarAprendizaje("Máx. iteraciones inválido."); return null; }
+  if (tipoDist === "minkowski" && qMinkowski < 1) { avisarAprendizaje("El parámetro q de Minkowski debe ser al menos 1."); return null; }
 
   var matriz = extraerMatriz(cols);
   if (matriz.length < k) {
-    alert("Datos insuficientes: se necesitan al menos K observaciones completas.");
-    return;
+    avisarAprendizaje("Datos insuficientes: se necesitan al menos K observaciones completas.");
+    return null;
   }
 
   if (estandarizar) matriz = estandarizarMatriz(matriz);
 
-  var resultado = ejecutarKmeans(matriz, k, maxIter, tipoDist, qMinkowski);
-  if (!resultado) { alert("No se pudo ejecutar K-means."); return; }
-
   var nombres = [];
   for (var i = 0; i < cols.length; i++) nombres.push(cols[i].nombre);
+  return { matriz: matriz, k: k, maxIter: maxIter, estandarizar: estandarizar, tipoDist: tipoDist, q: qMinkowski, nombres: nombres };
+}
 
-  mostrarResultadoKmeans(nombres, resultado, estandarizar);
-  mostrarSeccion("resultados");
+// Muestra el estado de carga (botón deshabilitado y spinner), deja que se pinte y
+// luego ejecuta el cálculo; al terminar avisa con el tiempo empleado
+function ejecutarConCarga(boton, calcular) {
+  var estado = document.getElementById("apr-estado");
+  var seccion = document.getElementById("seccion-aprendizaje");
+  if (boton) { boton.disabled = true; boton.classList.add("apr-cargando"); }
+  if (seccion) seccion.setAttribute("aria-busy", "true");
+  if (estado) estado.textContent = "Calculando…";
+
+  setTimeout(function () {
+    var inicio = (window.performance && performance.now) ? performance.now() : Date.now();
+    var completo = false;
+    try {
+      completo = calcular();
+    } finally {
+      var fin = (window.performance && performance.now) ? performance.now() : Date.now();
+      if (boton) { boton.disabled = false; boton.classList.remove("apr-cargando"); }
+      if (seccion) seccion.removeAttribute("aria-busy");
+      if (estado) estado.textContent = "";
+      if (completo) {
+        avisarAprendizaje("Clustering completado en " + ((fin - inicio) / 1000).toFixed(2) + " s", "exito");
+      }
+    }
+  }, 30);
+}
+
+function ejecutarKmeansUI() {
+  var config = leerConfiguracionClustering();
+  if (!config) return;
+  ejecutarConCarga(document.getElementById("btn-kmeans"), function () {
+    var resultado = ejecutarKmeans(config.matriz, config.k, config.maxIter, config.tipoDist, config.q);
+    if (!resultado) { avisarAprendizaje("No se pudo ejecutar K-means."); return false; }
+    mostrarResultadoKmeans(config.nombres, resultado, config.estandarizar);
+    mostrarSeccion("resultados");
+    return true;
+  });
 }
 
 function ejecutarKmedoidsUI() {
-  var cols = obtenerColumnasSeleccionadas("select-vars-cluster");
-  if (cols.length < 1) { alert("Selecciona al menos 1 variable numérica."); return; }
+  var config = leerConfiguracionClustering();
+  if (!config) return;
+  ejecutarConCarga(document.getElementById("btn-kmedoids"), function () {
+    var resultado = ejecutarKmedoids(config.matriz, config.k, config.maxIter, config.tipoDist, config.q);
+    if (!resultado) { avisarAprendizaje("No se pudo ejecutar K-medoids."); return false; }
+    mostrarResultadoKmedoids(config.nombres, resultado, config.estandarizar);
+    mostrarSeccion("resultados");
+    return true;
+  });
+}
 
-  var k = Number(document.getElementById("input-k").value);
-  var maxIter = Number(document.getElementById("input-max-iter").value);
-  var estandarizar = document.getElementById("check-estandarizar").checked;
-  var tipoDist = document.getElementById("select-distancia").value;
-  var qMinkowski = Number(document.getElementById("input-q-minkowski").value) || 2;
+// El campo q solo se muestra con la distancia de Minkowski
+function actualizarCampoQ() {
+  var campo = document.getElementById("apr-campo-q");
+  var distancia = document.getElementById("select-distancia");
+  if (campo && distancia) campo.hidden = distancia.value !== "minkowski";
+}
 
-  if (isNaN(k) || k < 1) { alert("K debe ser un entero positivo."); return; }
-  if (isNaN(maxIter) || maxIter < 1) { alert("Máx. iteraciones inválido."); return; }
+// Tarjetas de algoritmo (role="radio"): marcan la elegida y muestran SU botón de
+// ejecución original (#btn-kmeans o #btn-kmedoids), que conserva su lógica
+function elegirAlgoritmo(tarjeta, enfocar) {
+  var tarjetas = document.querySelectorAll(".apr-algoritmo");
+  for (var i = 0; i < tarjetas.length; i++) {
+    var elegida = tarjetas[i] === tarjeta;
+    tarjetas[i].setAttribute("aria-checked", elegida ? "true" : "false");
+    tarjetas[i].setAttribute("tabindex", elegida ? "0" : "-1");
+    var boton = document.getElementById(tarjetas[i].getAttribute("data-boton"));
+    if (boton) boton.hidden = !elegida;
+  }
+  if (enfocar) tarjeta.focus();
+}
 
-  var matriz = extraerMatriz(cols);
-  if (matriz.length < k) {
-    alert("Datos insuficientes: se necesitan al menos K observaciones completas.");
-    return;
+function inicializarPanelAprendizaje() {
+  var distancia = document.getElementById("select-distancia");
+  if (distancia) {
+    distancia.addEventListener("change", actualizarCampoQ);
+    actualizarCampoQ();
   }
 
-  if (estandarizar) matriz = estandarizarMatriz(matriz);
+  var tarjetas = Array.prototype.slice.call(document.querySelectorAll(".apr-algoritmo"));
+  tarjetas.forEach(function (tarjeta, i) {
+    tarjeta.addEventListener("click", function () { elegirAlgoritmo(tarjeta, false); });
+    tarjeta.addEventListener("keydown", function (evento) {
+      var destino = null;
+      if (evento.key === " " || evento.key === "Enter") destino = tarjeta;
+      else if (evento.key === "ArrowRight" || evento.key === "ArrowDown") destino = tarjetas[(i + 1) % tarjetas.length];
+      else if (evento.key === "ArrowLeft" || evento.key === "ArrowUp") destino = tarjetas[(i - 1 + tarjetas.length) % tarjetas.length];
+      if (!destino) return;
+      evento.preventDefault();
+      elegirAlgoritmo(destino, true);
+    });
+  });
+  var inicial = document.querySelector('.apr-algoritmo[aria-checked="true"]') || tarjetas[0];
+  if (inicial) elegirAlgoritmo(inicial, false);
 
-  var resultado = ejecutarKmedoids(matriz, k, maxIter, tipoDist, qMinkowski);
-  if (!resultado) { alert("No se pudo ejecutar K-medoids."); return; }
-
-  var nombres = [];
-  for (var i = 0; i < cols.length; i++) nombres.push(cols[i].nombre);
-
-  mostrarResultadoKmedoids(nombres, resultado, estandarizar);
-  mostrarSeccion("resultados");
+  // Tooltips: Escape los oculta mientras el foco o el mouse siguen encima
+  document.addEventListener("keydown", function (evento) {
+    if (evento.key !== "Escape") return;
+    var abiertos = document.querySelectorAll(".apr-ayuda");
+    for (var j = 0; j < abiertos.length; j++) abiertos[j].classList.add("apr-ayuda--oculta");
+  });
+  var ayudas = document.querySelectorAll(".apr-ayuda");
+  for (var a = 0; a < ayudas.length; a++) {
+    ayudas[a].addEventListener("mouseleave", function () { this.classList.remove("apr-ayuda--oculta"); });
+    ayudas[a].addEventListener("focusout", function () { this.classList.remove("apr-ayuda--oculta"); });
+  }
 }
+
+document.addEventListener("DOMContentLoaded", inicializarPanelAprendizaje);
 
 function ejecutarGraficoHistograma() {
   var idx = Number(document.getElementById("select-graf-hist").value);
